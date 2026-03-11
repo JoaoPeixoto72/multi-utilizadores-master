@@ -1,0 +1,28 @@
+{
+  "name": "cf-base",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Boilerplate multi-empresa SaaS — Cloudflare Workers + SvelteKit + Hono",
+  "engines": {
+    "node": ">=24.14.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "check": "turbo run check"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.4",
+    "@playwright/test": "1.58.2",
+    "turbo": "2.8.12",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18"
+  },
+  "packageManager": "pnpm@10.0.0"
+}

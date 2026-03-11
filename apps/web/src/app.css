@@ -1,0 +1,59 @@
+/* app.css — ponto de entrada global de estilos
+ * Importa design tokens + reset mínimo.
+ * NÃO adicionar regras visuais aqui — usar tokens.css exclusivamente.
+ */
+
+@import "tailwindcss";
+@import "./styles/tokens.css";
+
+/* ── Reset mínimo ──────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background-color: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  line-height: var(--leading-normal);
+}
+
+/* ── Focus ring global (WCAG AA) ─────────────────────────────────────────── */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* ── Scrollbar (apenas visual — não remove funcionalidade) ─────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-surface-subtle);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-input);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-input-hover);
+}
+
+/* ── Tailwind 4 (apenas layout/estrutural — sem classes visuais) ──────────── */
+/* @import "tailwindcss"; — movido para o topo para evitar erro de posição */

@@ -1,0 +1,45 @@
+.gitignore — cf-base
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.svelte-kit/
+dist/
+.wrangler/
+*.tsbuildinfo
+
+# Secrets — NUNCA commitar
+.dev.vars
+
+# Gerado por wrangler (commitar worker-configuration.d.ts)
+# worker-configuration.d.ts  ← NÃO ignorar — commitar
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Playwright
+test-results/
+playwright-report/
+e2e/.auth/
+apps/web/e2e/.auth/
+apps/web/e2e-results.json
+e2e-results.json
+
+# Coverage
+coverage/
+.nyc_output/
+.github/
+.turbo/

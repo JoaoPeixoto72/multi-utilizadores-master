@@ -1,0 +1,1 @@
+Cria um novo módulo chamado [Nome do Módulo]. Segue rigorosamente a estrutura de Monorepo do projeto: define o esquema no packages/shared, as rotas no apps/api (sempre filtrando por tenant_id) e as páginas no apps/web usando os componentes UI de base e o sistema de design tokens (Vanilla CSS).

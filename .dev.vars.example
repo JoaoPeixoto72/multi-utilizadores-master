@@ -1,0 +1,20 @@
+# .dev.vars.example — Template de variáveis de desenvolvimento local
+# Copiar para .dev.vars e preencher com valores reais (NUNCA commitar .dev.vars)
+# Gerar secrets: openssl rand -hex 32
+
+# ── Autenticação ──────────────────────────────────────────────────────────────
+CSRF_SECRET=SUBSTITUIR_openssl_rand_hex_32
+SESSION_SECRET=SUBSTITUIR_openssl_rand_hex_32
+
+# ── Criptografia (credenciais de integrações externas) ────────────────────────
+ENCRYPTION_KEY=SUBSTITUIR_aes256gcm_key_hex
+
+# ── Cloudflare (PDF via Browser Rendering) ────────────────────────────────────
+CF_ACCOUNT_ID=SUBSTITUIR_cloudflare_account_id
+CF_API_TOKEN=SUBSTITUIR_cloudflare_api_token
+
+# ── Observabilidade (opcional — activa SDK Sentry se presente) ────────────────
+# SENTRY_DSN=https://...@sentry.io/...
+
+# ── Ambiente ──────────────────────────────────────────────────────────────────
+APP_ENV=development

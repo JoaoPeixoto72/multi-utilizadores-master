@@ -1,0 +1,28 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --persist-to=../../.wrangler/state",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "0.7.6",
+    "bcryptjs": "^2.4.3",
+    "hono": "4.12.3",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "22.x",
+    "@vitest/coverage-v8": "^4.0.18",
+    "typescript": "5.9.3",
+    "vitest": "4.0.18",
+    "wrangler": "4.69.0"
+  }
+}

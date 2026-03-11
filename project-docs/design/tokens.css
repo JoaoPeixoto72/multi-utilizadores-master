@@ -1,0 +1,471 @@
+/*
+ * tokens.css — Design Tokens Canónicos
+ * Projecto:   cf-base (boilerplate multi-empresa Cloudflare)
+ * Fonte:      design-guidelines.md v2.2.2 (LOCKED — aprovado 2026-02-21)
+ * Mockup:     APROVADO 2026-02-26
+ * Caminho:    apps/web/src/styles/tokens.css  (destino final no repo)
+ *
+ * REGRA ABSOLUTA: nenhum valor visual (cor, espaçamento, px, radius,
+ * sombra, duração, z-index) pode existir directamente em componentes.
+ * Tudo passa por estas variáveis.
+ *
+ * EXCEPÇÕES PERMITIDAS SEM TOKEN:
+ *   - Breakpoints em media queries (ex: 1024px)
+ *   - Unidades/keywords sem "decisão visual fixa": %, vh, vw, fr, auto, none
+ *   - Números estruturais de layout (ex: repeat(4, 1fr))
+ */
+
+/* ============================================================
+   §1 — SUPERFÍCIES E TEXTO (LIGHT MODE — base :root)
+   ============================================================ */
+:root {
+  /* ── Superfícies (LIGHT) ── */
+  --bg-page:            #f7f8fa;
+  --bg-surface:         #ffffff;
+  --bg-surface-hover:   #fafafa;
+  --bg-surface-subtle:  #f3f4f6;
+  --bg-overlay:         rgba(0, 0, 0, 0.30);
+
+  /* ── Bordas (LIGHT) ── */
+  --border-base:        #f0f0f2;
+  --border-subtle:      #f5f5f7;
+  --border-input:       #e5e7eb;
+  --border-input-hover: #d1d5db;
+
+  /* ── Texto (LIGHT) ── */
+  --text-primary:       #111827;
+  --text-secondary:     #4b5563;
+  --text-muted:         #9ca3af;
+  --text-xmuted:        #c4c4cc;
+  --text-inverse:       #ffffff;
+
+  /* ── Status ── */
+  --status-active-dot:    #22c55e;
+  --status-pending-dot:   #f59e0b;
+  --status-inactive-dot:  #ef4444;
+  --status-active-text:   #16a34a;
+  --status-pending-text:  #d97706;
+  --status-inactive-text: #dc2626;
+
+  /* ── Notificação / Badge de alerta ── */
+  --badge-alert-bg:   #ef4444;
+  --badge-alert-text: #ffffff;
+
+  /* ── Tabelas ── */
+  --bg-table-header: #fafafa;
+
+  /* ── Métricas: semântica fixa (não varia com paleta) ── */
+  --metric-admin-bg:     #f5f3ff;
+  --metric-admin-icon:   #7c3aed;
+  --metric-members-bg:   #eff6ff;
+  --metric-members-icon: #2563eb;
+  --metric-storage-bg:   #fffbeb;
+  --metric-storage-icon: #d97706;
+  --metric-emails-bg:    #ecfdf5;
+  --metric-emails-icon:  #059669;
+}
+
+/* ============================================================
+   §2 — DARK MODE OVERRIDES
+   ============================================================ */
+[data-theme="dark"] {
+  /* ── Superfícies (DARK) ── */
+  --bg-page:            #0b0f17;
+  --bg-surface:         #0f1623;
+  --bg-surface-hover:   #121b2b;
+  --bg-surface-subtle:  #0c1320;
+  --bg-overlay:         rgba(0, 0, 0, 0.55);
+
+  /* ── Bordas (DARK) ── */
+  --border-base:        #1f2a3a;
+  --border-subtle:      #172233;
+  --border-input:       #243246;
+  --border-input-hover: #2f415c;
+
+  /* ── Texto (DARK) ── */
+  --text-primary:   #e5e7eb;
+  --text-secondary: #b6c0cf;
+  --text-muted:     #7f8aa3;
+  --text-xmuted:    #58627a;
+  --text-inverse:   #ffffff;
+
+  /* ── Tabelas (DARK) ── */
+  --bg-table-header: #0c1320;
+}
+
+/* ============================================================
+   §3 — PALETAS DE MARCA
+   (redefinem exclusivamente variáveis de marca — o resto mantém)
+   ============================================================ */
+
+/* ── INDIGO (default) ── */
+.palette-indigo {
+  --brand-50:        #f0f4ff;
+  --brand-100:       #e0e9ff;
+  --brand-200:       #c7d7fe;
+  --brand-500:       #6366f1;
+  --brand-600:       #4f46e5;
+  --brand-700:       #4338ca;
+  --brand-800:       #3730a3;
+  --badge-role-bg:   #f5f3ff;
+  --badge-role-text: #7c3aed;
+  --nav-active-bg:   #f0f4ff;
+  --nav-active-text: #4338ca;
+  --avatar-bg:       #f0f4ff;
+  --avatar-text:     #4338ca;
+  --ring-color:      rgba(99, 102, 241, 0.15);
+}
+
+/* ── EMERALD ── */
+.palette-emerald {
+  --brand-50:        #ecfdf5;
+  --brand-100:       #d1fae5;
+  --brand-200:       #a7f3d0;
+  --brand-500:       #10b981;
+  --brand-600:       #059669;
+  --brand-700:       #047857;
+  --brand-800:       #065f46;
+  --badge-role-bg:   #ecfdf5;
+  --badge-role-text: #047857;
+  --nav-active-bg:   #ecfdf5;
+  --nav-active-text: #065f46;
+  --avatar-bg:       #ecfdf5;
+  --avatar-text:     #047857;
+  --ring-color:      rgba(16, 185, 129, 0.15);
+}
+
+/* ── ROSE ── */
+.palette-rose {
+  --brand-50:        #fff1f2;
+  --brand-100:       #ffe4e6;
+  --brand-200:       #fecdd3;
+  --brand-500:       #f43f5e;
+  --brand-600:       #e11d48;
+  --brand-700:       #be123c;
+  --brand-800:       #9f1239;
+  --badge-role-bg:   #fff1f2;
+  --badge-role-text: #be123c;
+  --nav-active-bg:   #fff1f2;
+  --nav-active-text: #be123c;
+  --avatar-bg:       #fff1f2;
+  --avatar-text:     #be123c;
+  --ring-color:      rgba(244, 63, 94, 0.15);
+}
+
+/* ── AMBER ── */
+.palette-amber {
+  --brand-50:        #fffbeb;
+  --brand-100:       #fef3c7;
+  --brand-200:       #fde68a;
+  --brand-500:       #f59e0b;
+  --brand-600:       #d97706;
+  --brand-700:       #b45309;
+  --brand-800:       #92400e;
+  --badge-role-bg:   #fffbeb;
+  --badge-role-text: #92400e;
+  --nav-active-bg:   #fffbeb;
+  --nav-active-text: #92400e;
+  --avatar-bg:       #fffbeb;
+  --avatar-text:     #92400e;
+  --ring-color:      rgba(245, 158, 11, 0.15);
+}
+
+/* ── SLATE ── */
+.palette-slate {
+  --brand-50:        #f8fafc;
+  --brand-100:       #f1f5f9;
+  --brand-200:       #e2e8f0;
+  --brand-500:       #64748b;
+  --brand-600:       #475569;
+  --brand-700:       #334155;
+  --brand-800:       #1e293b;
+  --badge-role-bg:   #f1f5f9;
+  --badge-role-text: #334155;
+  --nav-active-bg:   #f1f5f9;
+  --nav-active-text: #1e293b;
+  --avatar-bg:       #f1f5f9;
+  --avatar-text:     #334155;
+  --ring-color:      rgba(100, 116, 139, 0.15);
+}
+
+/* ── OCEAN ── */
+.palette-ocean {
+  --brand-50:        #eff8ff;
+  --brand-100:       #dbeafe;
+  --brand-200:       #bfdbfe;
+  --brand-500:       #0ea5e9;
+  --brand-600:       #0284c7;
+  --brand-700:       #0369a1;
+  --brand-800:       #075985;
+  --badge-role-bg:   #eff8ff;
+  --badge-role-text: #0369a1;
+  --nav-active-bg:   #eff8ff;
+  --nav-active-text: #0369a1;
+  --avatar-bg:       #eff8ff;
+  --avatar-text:     #0369a1;
+  --ring-color:      rgba(14, 165, 233, 0.15);
+}
+
+/* ============================================================
+   §4 — PALETAS EM DARK MODE (overrides de marca)
+   ============================================================ */
+
+[data-theme="dark"].palette-indigo {
+  --nav-active-bg:   rgba(99, 102, 241, 0.16);
+  --nav-active-text: #c7d7fe;
+  --badge-role-bg:   rgba(99, 102, 241, 0.16);
+  --badge-role-text: #c7d7fe;
+  --avatar-bg:       rgba(99, 102, 241, 0.16);
+  --avatar-text:     #c7d7fe;
+  --ring-color:      rgba(99, 102, 241, 0.28);
+}
+
+[data-theme="dark"].palette-emerald {
+  --nav-active-bg:   rgba(16, 185, 129, 0.16);
+  --nav-active-text: #a7f3d0;
+  --badge-role-bg:   rgba(16, 185, 129, 0.16);
+  --badge-role-text: #a7f3d0;
+  --avatar-bg:       rgba(16, 185, 129, 0.16);
+  --avatar-text:     #a7f3d0;
+  --ring-color:      rgba(16, 185, 129, 0.28);
+}
+
+[data-theme="dark"].palette-rose {
+  --nav-active-bg:   rgba(244, 63, 94, 0.16);
+  --nav-active-text: #fecdd3;
+  --badge-role-bg:   rgba(244, 63, 94, 0.16);
+  --badge-role-text: #fecdd3;
+  --avatar-bg:       rgba(244, 63, 94, 0.16);
+  --avatar-text:     #fecdd3;
+  --ring-color:      rgba(244, 63, 94, 0.28);
+}
+
+[data-theme="dark"].palette-amber {
+  --nav-active-bg:   rgba(245, 158, 11, 0.16);
+  --nav-active-text: #fde68a;
+  --badge-role-bg:   rgba(245, 158, 11, 0.16);
+  --badge-role-text: #fde68a;
+  --avatar-bg:       rgba(245, 158, 11, 0.16);
+  --avatar-text:     #fde68a;
+  --ring-color:      rgba(245, 158, 11, 0.28);
+}
+
+[data-theme="dark"].palette-slate {
+  --nav-active-bg:   rgba(100, 116, 139, 0.18);
+  --nav-active-text: #e2e8f0;
+  --badge-role-bg:   rgba(100, 116, 139, 0.18);
+  --badge-role-text: #e2e8f0;
+  --avatar-bg:       rgba(100, 116, 139, 0.18);
+  --avatar-text:     #e2e8f0;
+  --ring-color:      rgba(100, 116, 139, 0.30);
+}
+
+[data-theme="dark"].palette-ocean {
+  --nav-active-bg:   rgba(14, 165, 233, 0.16);
+  --nav-active-text: #bfdbfe;
+  --badge-role-bg:   rgba(14, 165, 233, 0.16);
+  --badge-role-text: #bfdbfe;
+  --avatar-bg:       rgba(14, 165, 233, 0.16);
+  --avatar-text:     #bfdbfe;
+  --ring-color:      rgba(14, 165, 233, 0.28);
+}
+
+/* ============================================================
+   §5 — TIPOGRAFIA
+   ============================================================ */
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Tamanhos */
+  --text-2xs:    10px;
+  --text-xs:     12px;
+  --text-sm:     13px;
+  --text-base:   14px;
+  --text-lg:     16px;
+  --text-xl:     20px;
+  --text-metric: 24px;
+
+  /* Pesos */
+  --weight-normal:   400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* Line-height */
+  --leading-tight:  1.2;
+  --leading-normal: 1.5;
+  --leading-loose:  1.75;
+
+  /* Letter-spacing */
+  --tracking-normal: 0em;
+  --tracking-wide:   0.04em;
+  --tracking-wider:  0.06em;
+  --tracking-widest: 0.08em;
+}
+
+/* ============================================================
+   §6 — ESPAÇAMENTO
+   ============================================================ */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 10px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 32px;
+
+  /* Espaços semânticos */
+  --space-nav-y:        7px;
+  --space-status-gap:   5px;
+  --space-btn-icon-gap: 6px;
+  --space-compact-nav:  9px;
+}
+
+/* ============================================================
+   §7 — RADIUS
+   ============================================================ */
+:root {
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-full: 9999px;
+}
+
+/* ============================================================
+   §8 — SIZES (Layout, Controls, Content)
+   ============================================================ */
+:root {
+  /* Border widths */
+  --border-w-1: 1px;
+
+  /* Layout */
+  --size-header-h:          56px;
+  --size-subbar-h:          44px;
+  --size-sidebar-w:         224px;
+  --size-sidebar-compact-w: 60px;
+  --size-logo-zone-h:       56px;
+
+  /* Page paddings */
+  --pad-page-main: var(--space-7);
+  --pad-header-x:  var(--space-7);
+
+  /* Controls */
+  --size-control-h:      36px;
+  --size-icon-btn:       32px;
+  --size-pagination-btn: 28px;
+
+  /* Icons */
+  --size-icon-inline: 14px;
+  --size-icon-ui:     16px;
+  --size-icon-empty:  48px;
+
+  /* Status */
+  --size-status-dot: 6px;
+
+  /* Metric icon */
+  --size-metric-icon-box: 32px;
+  --size-metric-icon:     14px;
+
+  /* Header search */
+  --size-search-w:           200px;
+  --pad-search-left:         var(--space-8);
+  --offset-search-icon-left: var(--space-3);
+
+  /* Select chevron */
+  --offset-select-icon-right: var(--space-3);
+
+  /* Modais */
+  --size-modal-w:           420px;
+  --size-modal-w-wide:      560px;
+  --size-modal-w-compact:   320px;
+  --pad-modal-viewport:     var(--space-8);
+  --pad-modal-x:            22px;
+  --pad-modal-header-top:   18px;
+  --pad-modal-header-bottom: 16px;
+  --pad-modal-body-y:       var(--space-6);
+  --pad-modal-footer-y:     14px;
+
+  /* Tables */
+  --pad-table-x: var(--space-6);
+  --pad-th-y:    var(--space-3);
+  --pad-td-y:    var(--space-4);
+
+  /* Empty states */
+  --pad-empty-y: 48px;
+  --pad-empty-x: var(--space-6);
+
+  /* Buttons */
+  --pad-btn-primary-x:   14px;
+  --pad-btn-secondary-x: 13px;
+
+  /* Badges */
+  --pad-badge-y:       2px;
+  --pad-badge-x:       9px;
+  --pad-badge-count-y: 1px;
+  --pad-badge-count-x: 6px;
+
+  /* Progress bar */
+  --size-progress-h: 4px;
+
+  /* Auth card */
+  --size-auth-card-w: 380px;
+
+  /* Toast */
+  --size-toast-w: 320px;
+
+  /* Drawer */
+  --size-drawer-w: 480px;
+
+  /* Settings tabs column */
+  --size-settings-tabs-w: 200px;
+
+  /* Error pages */
+  --size-error-code: 80px;
+  --size-error-maxw: 400px;
+
+  /* Avatars */
+  --size-avatar-sm:  30px;
+  --size-avatar-md:  40px;
+  --text-avatar-sm:  11px;
+  --text-avatar-md:  14px;
+}
+
+/* ============================================================
+   §9 — ELEVAÇÃO (sombras)
+   Regra: box-shadow PROIBIDO em cards/tabelas.
+   Permitido APENAS em modais, dropdowns, popovers e focus ring.
+   ============================================================ */
+:root {
+  --shadow-none:    none;
+  --shadow-modal:   0 20px 60px rgba(0, 0, 0, 0.12);
+  --shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-focus:   0 0 0 3px var(--ring-color);
+}
+
+/* ============================================================
+   §10 — MOTION
+   ============================================================ */
+:root {
+  --duration-fast:   100ms;
+  --duration-normal: 150ms;
+  --duration-slow:   200ms;
+  --ease-default:    ease;
+  --ease-in-out:     ease-in-out;
+}
+
+/* ============================================================
+   §11 — Z-INDEX
+   ============================================================ */
+:root {
+  --z-base:    0;
+  --z-raised:  10;
+  --z-sticky:  40;
+  --z-overlay: 50;
+  --z-modal:   100;
+  --z-toast:   200;
+  --z-tooltip: 300;
+}

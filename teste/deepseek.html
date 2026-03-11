@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Sistema de Design Leve</title>
+    <style>
+        /* ===== VARIÁVEIS CSS (PALETA PRINCIPAL) ===== */
+        :root {
+            /* Neutros - Base da interface */
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F8FAFC;
+            --bg-tertiary: #F1F5F9;
+            
+            /* Textos */
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-tertiary: #94A3B8;
+            
+            /* Cores de ação - Primária */
+            --primary-main: #3B82F6;
+            --primary-dark: #2563EB;
+            --primary-light: #DBEAFE;
+            
+            /* Cores semânticas */
+            --warning: #F59E0B;
+            --warning-bg: #FEF3C7;
+            --error: #EF4444;
+            --error-bg: #FEE2E2;
+            --success: #10B981;
+            --success-bg: #D1FAE5;
+            
+            /* Bordas e divisores */
+            --border-light: #E2E8F0;
+            --border-focus: #3B82F6;
+            
+            /* Escala de cinza (para hierarquia) */
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-500: #64748B;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1E293B;
+            --gray-900: #0F172A;
+            
+            /* Overlays com opacidade */
+            --overlay-light: rgba(0, 0, 0, 0.05);
+            --overlay-medium: rgba(0, 0, 0, 0.1);
+            
+            /* Espaçamento */
+            --space-xs: 0.25rem;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+            
+            /* Bordas */
+            --radius-sm: 0.25rem;
+            --radius-md: 0.375rem;
+            --radius-lg: 0.5rem;
+            --radius-xl: 0.75rem;
+        }
+        
+        /* ===== RESET E ESTILOS BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: var(--space-xl);
+        }
+        
+        /* ===== LAYOUT DEMO ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Título da demo */
+        .demo-title {
+            margin-bottom: var(--space-xl);
+        }
+        
+        .demo-title h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .demo-title p {
+            color: var(--text-secondary);
+            max-width: 600px;
+        }
+        
+        /* Grid de demonstração */
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-lg);
+            margin-bottom: var(--space-xl);
+        }
+        
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: 0 1px 3px var(--overlay-light);
+            transition: all 0.2s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 6px var(--overlay-medium);
+            border-color: var(--gray-300);
+        }
+        
+        .card h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: var(--space-md);
+            color: var(--text-primary);
+        }
+        
+        .card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: var(--space-sm);
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Card em destaque */
+        .card-highlight {
+            background: white;
+            border-left: 4px solid var(--primary-main);
+        }
+        
+        /* ===== PALETA DE CORES ===== */
+        .color-palette {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+        
+        .color-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+        
+        .color-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .color-swatch {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-xs);
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+        }
+        
+        .color-box {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+        }
+        
+        .color-info {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+        
+        .color-info small {
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+        }
+        
+        /* ===== BOTÕES ===== */
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+            margin-top: var(--space-sm);
+        }
+        
+        .btn {
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-xs);
+        }
+        
+        .btn-primary {
+            background: var(--primary-main);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray-200);
+            border-color: var(--gray-300);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+        }
+        
+        .btn-outline:hover {
+            background: var(--bg-secondary);
+            border-color: var(--text-secondary);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #D97706;
+        }
+        
+        .btn-delete {
+            background: var(--error);
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background: #DC2626;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* ===== ALERTS ===== */
+        .alert-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+        
+        .alert {
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            border: 1px solid transparent;
+            font-size: 0.875rem;
+        }
+        
+        .alert-info {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border-color: var(--primary-main);
+        }
+        
+        .alert-success {
+            background: var(--success-bg);
+            color: #065F46;
+            border-color: var(--success);
+        }
+        
+        .alert-warning {
+            background: var(--warning-bg);
+            color: #92400E;
+            border-color: var(--warning);
+        }
+        
+        .alert-error {
+            background: var(--error-bg);
+            color: #991B1B;
+            border-color: var(--error);
+        }
+        
+        /* ===== FORMULÁRIO DEMO ===== */
+        .form-group {
+            margin-bottom: var(--space-md);
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: var(--space-sm) var(--space-md);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            background: white;
+            transition: all 0.2s ease;
+        }
+        
+        .form-input:hover {
+            border-color: var(--gray-400);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+        
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+        
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+        
+        .badge-primary {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        
+        .badge-success {
+            background: var(--success-bg);
+            color: #065F46;
+        }
+        
+        .badge-warning {
+            background: var(--warning-bg);
+            color: #92400E;
+        }
+        
+        .badge-error {
+            background: var(--error-bg);
+            color: #991B1B;
+        }
+        
+        /* ===== TABELA DEMO ===== */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            text-align: left;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.875rem;
+            border-bottom: 2px solid var(--border-light);
+        }
+        
+        .table td {
+            padding: var(--space-sm) var(--space-md);
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+        
+        .table tr:hover td {
+            background: var(--bg-secondary);
+        }
+        
+        /* ===== SEPARADORES ===== */
+        .divider {
+            height: 1px;
+            background: var(--border-light);
+            margin: var(--space-lg) 0;
+        }
+        
+        .divider-vertical {
+            width: 1px;
+            height: 20px;
+            background: var(--border-light);
+        }
+        
+        /* ===== FOOTER DA DEMO ===== */
+        .demo-footer {
+            margin-top: var(--space-xl);
+            padding: var(--space-lg);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        /* ===== UTILITÁRIOS DE ESPAÇAMENTO ===== */
+        .mt-4 { margin-top: var(--space-lg); }
+        .mb-2 { margin-bottom: var(--space-sm); }
+        .p-4 { padding: var(--space-lg); }
+        .flex { display: flex; }
+        .gap-2 { gap: var(--space-sm); }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Cabeçalho da Demo -->
+        <div class="demo-title">
+            <h1>🎨 Sistema de Design Leve</h1>
+            <p>Demonstração da paleta de cores otimizada para performance visual, usando tons neutros e poucas cores de destaque.</p>
+        </div>
+        
+        <!-- Grid Principal -->
+        <div class="demo-grid">
+            <!-- Card: Paleta de Cores -->
+            <div class="card">
+                <h2>🎨 Paleta Principal</h2>
+                
+                <div class="color-palette">
+                    <!-- Neutros -->
+                    <div class="color-group">
+                        <h3>Neutros</h3>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #FFFFFF;"></div>
+                            <div class="color-info">--bg-primary: #FFFFFF <small>Fundo página</small></div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #F8FAFC;"></div>
+                            <div class="color-info">--bg-secondary: #F8FAFC <small>Cards</small></div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #F1F5F9;"></div>
+                            <div class="color-info">--bg-tertiary: #F1F5F9 <small>Hover states</small></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Textos -->
+                    <div class="color-group">
+                        <h3>Textos</h3>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #1E293B;"></div>
+                            <div class="color-info">--text-primary: #1E293B <small>Títulos</small></div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #64748B;"></div>
+                            <div class="color-info">--text-secondary: #64748B <small>Legend as</small></div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #94A3B8;"></div>
+                            <div class="color-info">--text-tertiary: #94A3B8 <small>Placeholders</small></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ação -->
+                    <div class="color-group">
+                        <h3>Ação</h3>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #3B82F6;"></div>
+                            <div class="color-info">--primary-main: #3B82F6 <small>Botões</small></div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #2563EB;"></div>
+                            <div class="color-info">--primary-dark: #2563EB <small>Hover</small></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Semântica -->
+                    <div class="color-group">
+                        <h3>Semântica</h3>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #10B981;"></div>
+                            <div class="color-info">--success: #10B981</div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #F59E0B;"></div>
+                            <div class="color-info">--warning: #F59E0B</div>
+                        </div>
+                        <div class="color-swatch">
+                            <div class="color-box" style="background: #EF4444;"></div>
+                            <div class="color-info">--error: #EF4444</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card: Botões -->
+            <div class="card">
+                <h2>🔘 Botões</h2>
+                
+                <h3>Primários</h3>
+                <div class="button-group">
+                    <button class="btn btn-primary">Salvar</button>
+                    <button class="btn btn-primary" disabled>Desabilitado</button>
+                </div>
+                
+                <h3>Secundários</h3>
+                <div class="button-group">
+                    <button class="btn btn-secondary">Cancelar</button>
+                    <button class="btn btn-outline">Voltar</button>
+                </div>
+                
+                <h3>Ações Específicas</h3>
+                <div class="button-group">
+                    <button class="btn btn-success">Confirmar</button>
+                    <button class="btn btn-warning">Aviso</button>
+                    <button class="btn btn-delete">Apagar</button>
+                </div>
+                
+                <h3>Botões com ícone (exemplo)</h3>
+                <div class="button-group">
+                    <button class="btn btn-primary">
+                        <span>⭐</span> Favoritar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Card: Alerts e Badges -->
+            <div class="card">
+                <h2>⚠️ Feedback Visual</h2>
+                
+                <h3>Alerts</h3>
+                <div class="alert-group">
+                    <div class="alert alert-info">ℹ️ Informação: Atualização disponível</div>
+                    <div class="alert alert-success">✅ Sucesso: Dados salvos</div>
+                    <div class="alert alert-warning">⚠️ Aviso: Preencha todos os campos</div>
+                    <div class="alert alert-error">❌ Erro: Falha na conexão</div>
+                </div>
+                
+                <h3>Badges</h3>
+                <div class="flex gap-2 items-center" style="flex-wrap: wrap;">
+                    <span class="badge badge-primary">Novo</span>
+                    <span class="badge badge-success">Ativo</span>
+                    <span class="badge badge-warning">Pendente</span>
+                    <span class="badge badge-error">Bloqueado</span>
+                    <span class="badge">Rascunho</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Segunda linha de grids -->
+        <div class="demo-grid">
+            <!-- Card: Formulário Demo -->
+            <div class="card">
+                <h2>📝 Formulário</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Nome completo</label>
+                    <input type="text" class="form-input" placeholder="Ex: João Silva">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" placeholder="joao@email.com">
+                </div>
+                
+                <div class="flex gap-2 justify-between">
+                    <button class="btn btn-outline">Cancelar</button>
+                    <button class="btn btn-primary">Salvar</button>
+                </div>
+            </div>
+            
+            <!-- Card: Tabela Demo -->
+            <div class="card">
+                <h2>📊 Tabela Leve</h2>
+                
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>João Silva</td>
+                            <td><span class="badge badge-success">Ativo</span></td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <button class="btn btn-secondary" style="padding: 0.25rem 0.75rem;">✏️</button>
+                                    <button class="btn btn-delete" style="padding: 0.25rem 0.75rem;">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Maria Santos</td>
+                            <td><span class="badge badge-warning">Pendente</span></td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <button class="btn btn-secondary" style="padding: 0.25rem 0.75rem;">✏️</button>
+                                    <button class="btn btn-delete" style="padding: 0.25rem 0.75rem;">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Pedro Costa</td>
+                            <td><span class="badge badge-error">Inativo</span></td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <button class="btn btn-secondary" style="padding: 0.25rem 0.75rem;">✏️</button>
+                                    <button class="btn btn-delete" style="padding: 0.25rem 0.75rem;">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Card: Cards em Destaque -->
+            <div class="card card-highlight">
+                <h2>✨ Card em Destaque</h2>
+                <p style="color: var(--text-secondary); margin-bottom: var(--space-md);">
+                    Use a borda colorida para destacar cards importantes sem adicionar peso visual.
+                </p>
+                <div class="flex gap-2">
+                    <span class="badge badge-primary">Destaque</span>
+                    <span class="badge">Normal</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Demonstração de Hierarquia Visual -->
+        <div class="card" style="margin-top: var(--space-xl);">
+            <h2>📐 Hierarquia Visual com Tons</h2>
+            
+            <div style="display: flex; gap: var(--space-lg); flex-wrap: wrap;">
+                <div style="flex: 1;">
+                    <h3>Escala de Cinza</h3>
+                    <div style="display: flex; flex-direction: column; gap: var(--space-xs);">
+                        <div style="background: var(--gray-50); padding: var(--space-sm); border: 1px solid var(--border-light);">--gray-50: Fundo mais claro</div>
+                        <div style="background: var(--gray-100); padding: var(--space-sm); border: 1px solid var(--border-light);">--gray-100: Fundo secundário</div>
+                        <div style="background: var(--gray-200); padding: var(--space-sm); border: 1px solid var(--border-light);">--gray-200: Bordas</div>
+                        <div style="background: var(--gray-300); padding: var(--space-sm); border: 1px solid var(--border-light);">--gray-300: Divisores</div>
+                        <div style="background: var(--gray-400); padding: var(--space-sm); border: 1px solid var(--border-light);">--gray-400: Texto terciário</div>
+                        <div style="background: var(--gray-500); padding: var(--space-sm); color: white;">--gray-500: Texto secundário</div>
+                        <div style="background: var(--gray-600); padding: var(--space-sm); color: white;">--gray-600: Texto primário (hover)</div>
+                        <div style="background: var(--gray-700); padding: var(--space-sm); color: white;">--gray-700: Texto primário</div>
+                        <div style="background: var(--gray-800); padding: var(--space-sm); color: white;">--gray-800: Títulos</div>
+                        <div style="background: var(--gray-900); padding: var(--space-sm); color: white;">--gray-900: Quase preto</div>
+                    </div>
+                </div>
+                
+                <div style="flex: 1;">
+                    <h3>Dicas de Performance Visual</h3>
+                    <ul style="list-style: none; color: var(--text-secondary);">
+                        <li style="margin-bottom: var(--space-sm);">✅ Use opacidade em vez de novas cores</li>
+                        <li style="margin-bottom: var(--space-sm);">✅ Mantenha apenas 2-3 cores de destaque</li>
+                        <li style="margin-bottom: var(--space-sm);">✅ Evite sombras pesadas (use 0 1px 3px rgba(0,0,0,0.05))</li>
+                        <li style="margin-bottom: var(--space-sm);">✅ Dê espaçamento generoso entre elementos</li>
+                        <li style="margin-bottom: var(--space-sm);">✅ Use tons da mesma família para hierarquia</li>
+                        <li style="margin-bottom: var(--space-sm);">✅ Contraste moderado, sem forçar a vista</li>
+                    </ul>
+                    
+                    <div class="divider"></div>
+                    
+                    <h3>Exemplo de Overlays</h3>
+                    <div style="display: flex; gap: var(--space-sm);">
+                        <div style="width: 60px; height: 60px; background: var(--primary-main); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; position: relative;">
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--overlay-light); border-radius: var(--radius-md);"></div>
+                            light
+                        </div>
+                        <div style="width: 60px; height: 60px; background: var(--primary-main); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; position: relative;">
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--overlay-medium); border-radius: var(--radius-md);"></div>
+                            medium
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="demo-footer">
+            <p>✨ Sistema de Design Leve - Otimizado para performance visual</p>
+            <p style="color: var(--text-tertiary); margin-top: var(--space-xs);">
+                Use estas cores e estratégias para interfaces rápidas e agradáveis
+            </p>
+        </div>
+    </div>
+</body>
+</html>
