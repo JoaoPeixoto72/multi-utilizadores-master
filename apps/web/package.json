@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "paraglide-js compile --project ../../project.inlang --outdir src/lib/paraglide && svelte-kit sync && vite dev",
     "prebuild": "node scripts/check-i18n-parity.mjs && paraglide-js compile --project ../../project.inlang --outdir src/lib/paraglide",
-    "build": "vite build && node scripts/inject-do.mjs",
+    "build": "node scripts/check-i18n-parity.mjs && paraglide-js compile --project ../../project.inlang --outdir src/lib/paraglide && svelte-kit sync && vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -17,15 +17,15 @@
     "@inlang/paraglide-js": "2.12.0",
     "@lucide/svelte": "latest",
     "@sveltejs/adapter-cloudflare": "7.2.8",
-    "@sveltejs/kit": "2.53.4",
+    "@sveltejs/kit": "2.55.0",
     "bits-ui": "2.16.2",
-    "hono": "4.12.3",
-    "svelte": "5.53.5",
+    "hono": "4.12.7",
+    "svelte": "5.53.10",
     "tailwindcss": "4.2.1",
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260301.1",
+    "@cloudflare/workers-types": "^4.20260312.1",
     "@playwright/test": "1.58.2",
     "@sveltejs/vite-plugin-svelte": "6.2.4",
     "@tailwindcss/vite": "4.2.1",
@@ -34,6 +34,6 @@
     "svelte-check": "4.4.3",
     "typescript": "5.9.3",
     "vite": "7.3.1",
-    "vitest": "4.0.18"
+    "vitest": "4.1.0"
   }
 }

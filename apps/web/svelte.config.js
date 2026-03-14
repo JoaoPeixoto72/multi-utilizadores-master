@@ -7,7 +7,6 @@ const config = {
   kit: {
     adapter: adapter(),
     alias: {
-      $api: "../api/src",
       $shared: "../../packages/shared/src",
     },
   },

@@ -5,19 +5,11 @@
       "dependsOn": ["^build"],
       "outputs": [".svelte-kit/**", "dist/**"]
     },
-    "check": {
-      "dependsOn": ["^build"]
-    },
-    "typecheck": {
-      "dependsOn": ["^build"]
-    },
+    "check": {},
+    "typecheck": {},
     "lint": {},
-    "test": {
-      "dependsOn": ["^build"]
-    },
-    "test:coverage": {
-      "dependsOn": ["^build"]
-    },
+    "test": {},
+    "test:coverage": {},
     "dev": {
       "cache": false,
       "persistent": true

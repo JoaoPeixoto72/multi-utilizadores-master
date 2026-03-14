@@ -108,18 +108,11 @@ export const errorHandler = async (
  * Uso: export default { fetch: withGracefulShutdown(app.fetch) }
  */
 export function withGracefulShutdown(
-  fetchFn: ExportedHandlerFetchHandler<Env>,
-): ExportedHandlerFetchHandler<Env> {
+  fetchFn: (req: Request, env: Env, ctx: ExecutionContext) => Response | Promise<Response>,
+): (req: Request, env: Env, ctx: ExecutionContext) => Promise<Response> {
   return async (req: Request, env: Env, ctx: ExecutionContext) => {
-    const responsePromise = Promise.resolve(
-      (fetchFn as (req: Request, env: Env, ctx: ExecutionContext) => Response | Promise<Response>)(
-        req,
-        env,
-        ctx,
-      ),
-    );
-    // waitUntil garante que o Worker não é destruído antes de finalizar a resposta
-    ctx.waitUntil(responsePromise.catch(() => { }));
+    const responsePromise = Promise.resolve(fetchFn(req, env, ctx));
+    ctx.waitUntil(responsePromise.catch(() => {}));
     return responsePromise;
   };
 }

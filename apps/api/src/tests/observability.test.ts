@@ -172,10 +172,12 @@ describe("errorHandler", () => {
 
 describe("withGracefulShutdown", () => {
   it("should return the same response as the wrapped fetch", async () => {
-    const app = new Hono();
+    const app = new Hono<{ Bindings: Env }>();
     app.get("/ping", (c) => c.json({ pong: true }));
 
-    const wrapped = withGracefulShutdown(app.fetch as unknown as ExportedHandlerFetchHandler<Env>);
+    const wrapped = withGracefulShutdown(
+      app.fetch as unknown as (request: Request, env: Env, ctx: ExecutionContext) => Response | Promise<Response>
+    );
 
     const waitUntilSpy = vi.fn();
     const ctx = {
@@ -184,13 +186,11 @@ describe("withGracefulShutdown", () => {
     } as unknown as ExecutionContext;
 
     const res = await wrapped(
-      new Request("http://localhost/ping") as unknown as Request<
-        unknown,
-        IncomingRequestCfProperties<unknown>
-      >,
+      new Request("http://localhost/ping"),
       mockEnv,
       ctx,
     );
+
     expect(res.status).toBe(200);
     expect(waitUntilSpy).toHaveBeenCalledTimes(1);
   });

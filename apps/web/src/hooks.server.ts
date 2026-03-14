@@ -1,17 +1,4 @@
-/**
- * hooks.server.ts — Único ponto de delegação SvelteKit → Hono
- *
- * R: STACK_LOCK.md §4 — integracao_sveltekit_hono
- * Regras:
- *   - ZERO +server.ts para lógica de API (GS05)
- *   - Todo o prefixo /api/** delegado para Hono
- *   - Bindings passados via platform.env
- *
- * M11: Injecta data-layout, data-theme e classe palette-* no <body>
- * a partir de cookies para evitar flash de tema no SSR.
- */
 import type { Handle } from "@sveltejs/kit";
-import { createHonoApp } from "$api/index";
 
 const VALID_LAYOUTS = ["sidebar", "compact", "topnav"] as const;
 const VALID_PALETTES = ["indigo", "emerald", "rose", "amber", "slate", "ocean"] as const;
@@ -24,14 +11,6 @@ function parseCookie(header: string | null, name: string): string | null {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
-  // Delegar /api/** para Hono (inline — o adaptador CF fornece platform.env)
-  if (event.url.pathname.startsWith("/api/")) {
-    const app = createHonoApp();
-    // biome-ignore lint/suspicious/noExplicitAny: platform.env tipado em runtime pelo CF adapter
-    const env = (event.platform as any)?.env;
-    return app.fetch(event.request, env);
-  }
-
   const cookieHeader = event.request.headers.get("cookie");
 
   const rawLayout = parseCookie(cookieHeader, "cf_layout");
@@ -39,20 +18,21 @@ export const handle: Handle = async ({ event, resolve }) => {
   const rawTheme = parseCookie(cookieHeader, "cf_theme");
 
   const layout = (VALID_LAYOUTS as readonly string[]).includes(rawLayout ?? "")
-    ? rawLayout! : "sidebar";
+    ? rawLayout!
+    : "sidebar";
   const palette = (VALID_PALETTES as readonly string[]).includes(rawPalette ?? "")
-    ? rawPalette! : "indigo";
+    ? rawPalette!
+    : "indigo";
   const theme = (VALID_THEMES as readonly string[]).includes(rawTheme ?? "")
-    ? rawTheme! : "light";
+    ? rawTheme!
+    : "light";
 
   return resolve(event, {
     transformPageChunk({ html }) {
-      // Injectar atributos no <body> para SSR sem flash
-      return html
-        .replace(
-          '<body data-sveltekit-preload-data="hover">',
-          `<body data-sveltekit-preload-data="hover" data-layout="${layout}" data-theme="${theme}" class="palette-${palette}">`,
-        );
+      return html.replace(
+        '<body data-sveltekit-preload-data="hover">',
+        `<body data-sveltekit-preload-data="hover" data-layout="${layout}" data-theme="${theme}" class="palette-${palette}">`,
+      );
     },
   });
 };

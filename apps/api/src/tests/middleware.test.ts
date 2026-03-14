@@ -51,18 +51,18 @@ function makeDb(
 // Build a minimal Env for middleware tests
 function makeEnv(overrides: Partial<Env> = {}): Env {
   return {
-    DB: makeDb() as D1Database,
-    CSRF_SECRET,
-    SESSION_SECRET,
-    RATE_LIMITER: {} as DurableObjectNamespace,
-    R2_BUCKET: {} as R2Bucket,
-    BACKUP_QUEUE: {} as Queue,
-    ASSETS: {} as Fetcher,
-    ENCRYPTION_KEY: "c".repeat(64),
-    CF_ACCOUNT_ID: "acc",
-    CF_API_TOKEN: "tok",
-    APP_ENV: "test",
-    ...overrides,
+    DB: (overrides.DB ?? makeDb()) as D1Database,
+    CSRF_SECRET: overrides.CSRF_SECRET ?? CSRF_SECRET,
+    SESSION_SECRET: overrides.SESSION_SECRET ?? SESSION_SECRET,
+    RATE_LIMITER: (overrides.RATE_LIMITER ?? ({} as DurableObjectNamespace)) as DurableObjectNamespace,
+    R2_BUCKET: (overrides.R2_BUCKET ?? ({} as R2Bucket)) as R2Bucket,
+    ENCRYPTION_KEY: overrides.ENCRYPTION_KEY ?? "c".repeat(64),
+    CF_ACCOUNT_ID: overrides.CF_ACCOUNT_ID ?? "acc",
+    CF_API_TOKEN: overrides.CF_API_TOKEN ?? "tok",
+    APP_ENV: overrides.APP_ENV ?? "test",
+    APP_URL: overrides.APP_URL ?? "http://localhost:5173",
+    API_URL: overrides.API_URL ?? "http://127.0.0.1:8787",
+    SENTRY_DSN: overrides.SENTRY_DSN,
   };
 }
 

@@ -20,9 +20,9 @@ export async function getAllAppConfig(db: D1Database): Promise<Record<string, st
     await db
       .prepare("SELECT key, value FROM app_config ORDER BY key ASC")
       .all<{ key: string; value: string }>()
-  ).results;
+  ).results as Array<{ key: string; value: string }>;
 
-  return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  return Object.fromEntries(rows.map(({ key, value }) => [key, value]));
 }
 
 // ── Escrita ────────────────────────────────────────────────────────────────────

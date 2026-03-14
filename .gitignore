@@ -11,6 +11,7 @@ dist/
 
 # Secrets — NUNCA commitar
 .dev.vars
+**/.dev.vars
 
 # Gerado por wrangler (commitar worker-configuration.d.ts)
 # worker-configuration.d.ts  ← NÃO ignorar — commitar

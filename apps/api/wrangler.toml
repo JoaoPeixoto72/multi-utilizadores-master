@@ -1,46 +1,38 @@
 name = "cf-base-api"
 main = "src/index.ts"
-compatibility_date = "2026-02-26"
+compatibility_date = "2026-03-05"
 compatibility_flags = ["nodejs_als", "nodejs_compat"]
 
-# ── Observability ───────────────────────────────────────────────────────────
 [observability]
 enabled = true
 
 [[d1_databases]]
-binding       = "DB"
+binding = "DB"
 database_name = "cf-base-db"
-database_id   = "REPLACE-WITH-D1-DB-ID"
-migrations_dir = "../../migrations"
+database_id = "REPLACE-WITH-D1-DB-ID"
+migrations_dir = "migrations"
 
-# ── Durable Objects (Rate Limiter) ───────────────────────────────────────────
 [[durable_objects.bindings]]
-name       = "RATE_LIMITER"
+name = "RATE_LIMITER"
 class_name = "RateLimiter"
 
 [[migrations]]
-tag                = "v1"
+tag = "v1"
 new_sqlite_classes = ["RateLimiter"]
 
 [[r2_buckets]]
-binding     = "R2_BUCKET"
+binding = "R2_BUCKET"
 bucket_name = "cf-base-storage"
 
-# ── Cron Triggers ───────────────────────────────────────────────────────────
 [triggers]
 crons = ["0 0 * * *"]
 
-# ── Variables ───────────────────────────────────────────────────────────────
 [vars]
 APP_ENV = "development"
-APP_URL = "https://cf-base-api.workers.dev"
+APP_URL = "http://localhost:5173"
+API_URL = "http://127.0.0.1:8787"
 
-# ── Migrations ─────────────────────────────────────────────────────────────
-# See migrations_dir above for actual migration sources
-
-# ── Secrets should be provided via wrangler secret put, not hard-coded here
-# CSRF_SECRET    → via wrangler secret put
-# SESSION_SECRET → via wrangler secret put
-# ENCRYPTION_KEY → via wrangler secret put
-# CF_ACCOUNT_ID  → via wrangler secret put
-# CF_API_TOKEN   → via wrangler secret put
+[env.production.vars]
+APP_ENV = "production"
+APP_URL = "https://app.teudominio.com"
+API_URL = "https://app.teudominio.com/api"

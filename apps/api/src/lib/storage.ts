@@ -18,6 +18,11 @@ import { getAppConfig } from "../db/queries/app-config.js";
 export const FALLBACK_MAX_BYTES = 200 * 1024; // 200 KB
 export const FALLBACK_MAX_PIXELS = 512;
 
+export const AVATAR_MAX_BYTES = FALLBACK_MAX_BYTES;
+export const AVATAR_MAX_WIDTH = FALLBACK_MAX_PIXELS;
+export const AVATAR_MAX_HEIGHT = FALLBACK_MAX_PIXELS;
+
+
 // Removemos export das fixas pois a API agora consumirá variáveis dinâmicas.
 
 // WebP magic bytes: RIFF????WEBP
