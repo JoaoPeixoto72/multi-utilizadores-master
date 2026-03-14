@@ -1,4 +1,4 @@
-name = "cf-base-api"
+name = "arch-api"
 main = "src/index.ts"
 compatibility_date = "2026-03-05"
 compatibility_flags = ["nodejs_als", "nodejs_compat"]
@@ -8,8 +8,8 @@ enabled = true
 
 [[d1_databases]]
 binding = "DB"
-database_name = "cf-base-db"
-database_id = "REPLACE-WITH-D1-DB-ID"
+database_name = "arch"
+database_id = "f50e22cf-2ef5-4e65-b10e-b82fcceb8fe2"
 migrations_dir = "migrations"
 
 [[durable_objects.bindings]]
@@ -22,7 +22,7 @@ new_sqlite_classes = ["RateLimiter"]
 
 [[r2_buckets]]
 binding = "R2_BUCKET"
-bucket_name = "cf-base-storage"
+bucket_name = "arch-storage"
 
 [triggers]
 crons = ["0 0 * * *"]
@@ -32,7 +32,21 @@ APP_ENV = "development"
 APP_URL = "http://localhost:5173"
 API_URL = "http://127.0.0.1:8787"
 
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "arch"
+database_id = "f50e22cf-2ef5-4e65-b10e-b82fcceb8fe2"
+migrations_dir = "migrations"
+
+[[env.production.durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+
+[[env.production.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "arch-storage"
+
 [env.production.vars]
 APP_ENV = "production"
-APP_URL = "https://app.teudominio.com"
-API_URL = "https://app.teudominio.com/api"
+APP_URL = "https://arch.wellnesscorporateplan.pt"
+API_URL = "https://arch.wellnesscorporateplan.pt/api"

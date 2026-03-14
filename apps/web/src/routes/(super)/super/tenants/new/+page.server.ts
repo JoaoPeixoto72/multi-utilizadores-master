@@ -5,7 +5,14 @@
  * R: briefing.md §1.2 — super user cria empresa + envia convite ao owner
  */
 import { fail, redirect } from "@sveltejs/kit";
+import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from "./$types";
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 export const load: PageServerLoad = async ({ parent }) => {
   const { csrfToken } = await parent();
@@ -13,7 +20,8 @@ export const load: PageServerLoad = async ({ parent }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, fetch }) => {
+  default: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const data = await request.formData();
 
     const name              = data.get("name")?.toString() ?? "";
@@ -32,11 +40,12 @@ export const actions: Actions = {
       return fail(422, { error: "validation", name, email, owner_email });
     }
 
-    const res = await fetch("/api/super/tenants", {
+    const res = await fetch(`${apiBase}/api/super/tenants`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-csrf-token": csrf,
+        cookie: cookies.toString()
       },
       body: JSON.stringify({
         name,

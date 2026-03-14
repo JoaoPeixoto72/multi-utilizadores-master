@@ -8,7 +8,14 @@
  */
 
 import { fail } from "@sveltejs/kit";
+import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from "./$types";
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 function isRedirect(e: unknown): boolean {
   return typeof e === "object" && e !== null && "status" in e && "location" in e;
@@ -43,7 +50,8 @@ interface PermissionRow {
   module_permissions: Record<string, unknown>;
 }
 
-export const load: PageServerLoad = async ({ fetch, parent, url }) => {
+export const load: PageServerLoad = async ({ fetch, parent, url, cookies }) => {
+  const apiBase = getApiBase();
   const { adminUser } = await parent();
   const tab = url.searchParams.get("tab") ?? "collaborators";
 
@@ -56,10 +64,26 @@ export const load: PageServerLoad = async ({ fetch, parent, url }) => {
 
   try {
     const [collabRes, membersRes, invitesRes, clientsRes] = await Promise.all([
-      fetch("/api/admin/team/collaborators?limit=50"),
-      fetch("/api/admin/team/members?limit=50"),
-      fetch("/api/admin/team/invitations?limit=50"),
-      fetch("/api/admin/team/clients?limit=50"),
+      fetch(`${apiBase}/api/admin/team/collaborators?limit=50`, {
+        headers: {
+          cookie: cookies.toString()
+        }
+      }),
+      fetch(`${apiBase}/api/admin/team/members?limit=50`, {
+        headers: {
+          cookie: cookies.toString()
+        }
+      }),
+      fetch(`${apiBase}/api/admin/team/invitations?limit=50`, {
+        headers: {
+          cookie: cookies.toString()
+        }
+      }),
+      fetch(`${apiBase}/api/admin/team/clients?limit=50`, {
+        headers: {
+          cookie: cookies.toString()
+        }
+      }),
     ]);
 
     if (collabRes.ok) {
@@ -81,7 +105,11 @@ export const load: PageServerLoad = async ({ fetch, parent, url }) => {
 
     // Carregar permissões se tab=permissions
     if (tab === "permissions") {
-      const permRes = await fetch("/api/admin/team/permissions");
+      const permRes = await fetch(`${apiBase}/api/admin/team/permissions`, {
+        headers: {
+          cookie: cookies.toString()
+        }
+      });
       if (permRes.ok) {
         const data = await permRes.json() as { rows: PermissionRow[] };
         permissions = data.rows;
@@ -106,7 +134,8 @@ export const load: PageServerLoad = async ({ fetch, parent, url }) => {
 
 export const actions: Actions = {
   // ── Convidar membro/colaborador ─────────────────────────────────────────────
-  invite: async ({ request, fetch }) => {
+  invite: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const email = form.get("email")?.toString().trim() ?? "";
     const role = form.get("role")?.toString() ?? "collaborator";
@@ -120,11 +149,12 @@ export const actions: Actions = {
     }
 
     try {
-      const res = await fetch("/api/admin/team/invitations", {
+      const res = await fetch(`${apiBase}/api/admin/team/invitations`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-csrf-token": csrfToken,
+          cookie: cookies.toString()
         },
         body: JSON.stringify({ email, role }),
       });
@@ -149,15 +179,19 @@ export const actions: Actions = {
   },
 
   // ── Desactivar colaborador ──────────────────────────────────────────────────
-  deactivate: async ({ request, fetch }) => {
+  deactivate: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`/api/admin/team/collaborators/${userId}/deactivate`, {
+      const res = await fetch(`${apiBase}/api/admin/team/collaborators/${userId}/deactivate`, {
         method: "POST",
-        headers: { "x-csrf-token": csrfToken },
+        headers: { 
+          "x-csrf-token": csrfToken,
+          cookie: cookies.toString()
+        },
       });
       if (!res.ok) {
         const data = await res.json() as { detail?: string };
@@ -171,15 +205,19 @@ export const actions: Actions = {
   },
 
   // ── Reactivar colaborador ───────────────────────────────────────────────────
-  reactivate: async ({ request, fetch }) => {
+  reactivate: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`/api/admin/team/collaborators/${userId}/reactivate`, {
+      const res = await fetch(`${apiBase}/api/admin/team/collaborators/${userId}/reactivate`, {
         method: "POST",
-        headers: { "x-csrf-token": csrfToken },
+        headers: { 
+          "x-csrf-token": csrfToken,
+          cookie: cookies.toString()
+        },
       });
       if (!res.ok) {
         const data = await res.json() as { detail?: string };
@@ -193,15 +231,19 @@ export const actions: Actions = {
   },
 
   // ── Eliminar colaborador ────────────────────────────────────────────────────
-  delete_collaborator: async ({ request, fetch }) => {
+  delete_collaborator: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`/api/admin/team/collaborators/${userId}`, {
+      const res = await fetch(`${apiBase}/api/admin/team/collaborators/${userId}`, {
         method: "DELETE",
-        headers: { "x-csrf-token": csrfToken },
+        headers: { 
+          "x-csrf-token": csrfToken,
+          cookie: cookies.toString()
+        },
       });
       if (!res.ok) {
         const data = await res.json() as { detail?: string };
@@ -215,15 +257,19 @@ export const actions: Actions = {
   },
 
   // ── Eliminar sócio ──────────────────────────────────────────────────────────
-  delete_member: async ({ request, fetch }) => {
+  delete_member: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`/api/admin/team/members/${userId}`, {
+      const res = await fetch(`${apiBase}/api/admin/team/members/${userId}`, {
         method: "DELETE",
-        headers: { "x-csrf-token": csrfToken },
+        headers: { 
+          "x-csrf-token": csrfToken,
+          cookie: cookies.toString()
+        },
       });
       if (!res.ok) {
         const data = await res.json() as { detail?: string };
@@ -237,15 +283,19 @@ export const actions: Actions = {
   },
 
   // ── Eliminar cliente ───────────────────────────────────────────────────────
-  delete_client: async ({ request, fetch }) => {
+  delete_client: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`/api/admin/team/clients/${userId}`, {
+      const res = await fetch(`${apiBase}/api/admin/team/clients/${userId}`, {
         method: "DELETE",
-        headers: { "x-csrf-token": csrfToken },
+        headers: { 
+          "x-csrf-token": csrfToken,
+          cookie: cookies.toString()
+        },
       });
       if (!res.ok) {
         const data = await res.json() as { detail?: string };
@@ -259,15 +309,19 @@ export const actions: Actions = {
   },
 
   // ── Cancelar convite ────────────────────────────────────────────────────────
-  cancel_invite: async ({ request, fetch }) => {
+  cancel_invite: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const inviteId = form.get("invite_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`/api/admin/team/invitations/${inviteId}`, {
+      const res = await fetch(`${apiBase}/api/admin/team/invitations/${inviteId}`, {
         method: "DELETE",
-        headers: { "x-csrf-token": csrfToken },
+        headers: { 
+          "x-csrf-token": csrfToken,
+          cookie: cookies.toString()
+        },
       });
       if (!res.ok) {
         const data = await res.json() as { detail?: string };
@@ -281,15 +335,19 @@ export const actions: Actions = {
   },
 
   // ── Eliminar convite ────────────────────────────────────────────────────────
-  delete_invite: async ({ request, fetch }) => {
+  delete_invite: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const inviteId = form.get("invite_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`/api/admin/team/invitations/${inviteId}/force`, {
+      const res = await fetch(`${apiBase}/api/admin/team/invitations/${inviteId}/force`, {
         method: "DELETE",
-        headers: { "x-csrf-token": csrfToken },
+        headers: { 
+          "x-csrf-token": csrfToken,
+          cookie: cookies.toString()
+        },
       });
       if (!res.ok) {
         const data = await res.json() as { detail?: string };
@@ -303,15 +361,19 @@ export const actions: Actions = {
   },
 
   // ── Reenviar convite ────────────────────────────────────────────────────────
-  resend_invite: async ({ request, fetch }) => {
+  resend_invite: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const inviteId = form.get("invite_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`/api/admin/team/invitations/${inviteId}/resend`, {
+      const res = await fetch(`${apiBase}/api/admin/team/invitations/${inviteId}/resend`, {
         method: "POST",
-        headers: { "x-csrf-token": csrfToken },
+        headers: { 
+          "x-csrf-token": csrfToken,
+          cookie: cookies.toString()
+        },
       });
       if (!res.ok) {
         const data = await res.json() as { detail?: string };
@@ -325,7 +387,8 @@ export const actions: Actions = {
   },
 
   // ── Actualizar permissões ───────────────────────────────────────────────────
-  update_permissions: async ({ request, fetch }) => {
+  update_permissions: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const permissionsJson = form.get("permissions")?.toString() ?? "{}";
@@ -339,11 +402,12 @@ export const actions: Actions = {
     }
 
     try {
-      const res = await fetch(`/api/admin/team/permissions/${userId}`, {
+      const res = await fetch(`${apiBase}/api/admin/team/permissions/${userId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           "x-csrf-token": csrfToken,
+          cookie: cookies.toString()
         },
         body: JSON.stringify({ module_permissions: permissions }),
       });

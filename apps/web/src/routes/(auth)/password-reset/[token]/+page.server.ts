@@ -5,14 +5,22 @@
  * R: STACK_LOCK.md §6 — token uso único, expira 1h, invalida sessão
  */
 import { fail, redirect } from "@sveltejs/kit";
+import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from "./$types";
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 export const load: PageServerLoad = async ({ params }) => {
   return { token: params.token };
 };
 
 export const actions: Actions = {
-  default: async ({ request, fetch, params }) => {
+  default: async ({ request, fetch, params, cookies }) => {
+    const apiBase = getApiBase();
     const data = await request.formData();
     const password = data.get("password")?.toString() ?? "";
     const csrf = data.get("_csrf")?.toString() ?? "";
@@ -22,11 +30,12 @@ export const actions: Actions = {
       return fail(422, { error: "validation" });
     }
 
-    const res = await fetch("/api/auth/password-reset/confirm", {
+    const res = await fetch(`${apiBase}/api/auth/password-reset/confirm`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-csrf-token": csrf,
+        cookie: cookies.toString()
       },
       body: JSON.stringify({ token, password }),
     });

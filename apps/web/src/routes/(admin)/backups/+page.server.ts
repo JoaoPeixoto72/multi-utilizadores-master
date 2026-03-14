@@ -5,7 +5,14 @@
  */
 
 import { isRedirect } from '@sveltejs/kit';
+import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from './$types';
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 interface BackupItem {
   id: string;
@@ -27,10 +34,19 @@ interface BackupAutoConfig {
   retention_days: number;
 }
 
-export const load: PageServerLoad = async ({ fetch }) => {
+export const load: PageServerLoad = async ({ fetch, cookies }) => {
+  const apiBase = getApiBase();
   const [backupsRes, configRes] = await Promise.all([
-    fetch('/api/admin/backups'),
-    fetch('/api/admin/backups/config'),
+    fetch(`${apiBase}/api/admin/backups`, {
+      headers: {
+        cookie: cookies.toString()
+      }
+    }),
+    fetch(`${apiBase}/api/admin/backups/config`, {
+      headers: {
+        cookie: cookies.toString()
+      }
+    }),
   ]);
 
   const backupsData = backupsRes.ok
@@ -49,17 +65,19 @@ export const load: PageServerLoad = async ({ fetch }) => {
 };
 
 export const actions: Actions = {
-  create: async ({ fetch, request }) => {
+  create: async ({ fetch, request, cookies }) => {
+    const apiBase = getApiBase();
     try {
       const form = await request.formData();
       const type = (form.get('type') as string) || 'db_only';
       const csrf = form.get('_csrf')?.toString() ?? '';
 
-      const res = await fetch('/api/admin/backups', {
+      const res = await fetch(`${apiBase}/api/admin/backups`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-csrf-token': csrf
+          'x-csrf-token': csrf,
+          cookie: cookies.toString()
         },
         body: JSON.stringify({ type }),
       });
@@ -76,15 +94,19 @@ export const actions: Actions = {
     }
   },
 
-  delete: async ({ fetch, request }) => {
+  delete: async ({ fetch, request, cookies }) => {
+    const apiBase = getApiBase();
     try {
       const form = await request.formData();
       const id = form.get('id') as string;
       const csrf = form.get('_csrf')?.toString() ?? '';
 
-      const res = await fetch(`/api/admin/backups/${id}`, {
+      const res = await fetch(`${apiBase}/api/admin/backups/${id}`, {
         method: 'DELETE',
-        headers: { 'x-csrf-token': csrf }
+        headers: { 
+          'x-csrf-token': csrf,
+          cookie: cookies.toString()
+        }
       });
       if (!res.ok) {
         const err = (await res.json()) as { detail?: string };
@@ -98,7 +120,8 @@ export const actions: Actions = {
     }
   },
 
-  update_config: async ({ fetch, request }) => {
+  update_config: async ({ fetch, request, cookies }) => {
+    const apiBase = getApiBase();
     try {
       const form = await request.formData();
       const csrf = form.get('_csrf')?.toString() ?? '';
@@ -109,11 +132,12 @@ export const actions: Actions = {
         retention_days: Number(form.get('retention_days') ?? 30),
       };
 
-      const res = await fetch('/api/admin/backups/config', {
+      const res = await fetch(`${apiBase}/api/admin/backups/config`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-csrf-token': csrf
+          'x-csrf-token': csrf,
+          cookie: cookies.toString()
         },
         body: JSON.stringify(config),
       });

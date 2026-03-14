@@ -7,7 +7,14 @@
  * R: briefing.md §3.1 — redirect por role após login
  */
 import { fail, redirect } from "@sveltejs/kit";
+import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from "./$types";
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 // SvelteKit redirect() lança uma excepção especial — relançar sempre
 function isRedirect(e: unknown): boolean {
@@ -20,7 +27,8 @@ function isRedirect(e: unknown): boolean {
   );
 }
 
-export const load: PageServerLoad = async ({ parent, url, fetch }) => {
+export const load: PageServerLoad = async ({ parent, url, fetch, cookies }) => {
+  const apiBase = getApiBase();
   const { user } = await parent();
 
   // Se já autenticado, redirecionar para o dashboard correcto
@@ -34,7 +42,11 @@ export const load: PageServerLoad = async ({ parent, url, fetch }) => {
 
   // Verificar se o setup foi feito — se não, redirecionar para /setup
   try {
-    const res = await fetch("/api/setup");
+    const res = await fetch(`${apiBase}/api/setup`, {
+      headers: {
+        cookie: cookies.toString()
+      }
+    });
     if (res.ok) {
       const data = (await res.json()) as { available: boolean };
       if (data.available) {
@@ -54,6 +66,7 @@ export const load: PageServerLoad = async ({ parent, url, fetch }) => {
 
 export const actions: Actions = {
   default: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const data = await request.formData();
     const email = data.get("email")?.toString() ?? "";
     const password = data.get("password")?.toString() ?? "";
@@ -63,11 +76,12 @@ export const actions: Actions = {
       return fail(422, { error: "auth_invalid_credentials", email });
     }
 
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch(`${apiBase}/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-csrf-token": csrf,
+        cookie: cookies.toString()
       },
       body: JSON.stringify({ email, password }),
     });

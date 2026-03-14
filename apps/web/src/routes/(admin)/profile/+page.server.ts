@@ -16,7 +16,14 @@
  */
 
 import { fail } from "@sveltejs/kit";
+import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from "./$types";
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 interface UserProfile {
   id: string;
@@ -47,13 +54,18 @@ interface CompanyProfile {
   storage_limit: number;
 }
 
-export const load: PageServerLoad = async ({ fetch, parent }) => {
+export const load: PageServerLoad = async ({ fetch, parent, cookies }) => {
+  const apiBase = getApiBase();
   const { adminUser } = await parent();
 
   // Carregar perfil
   let profile: UserProfile | null = null;
   try {
-    const res = await fetch("/api/user/profile");
+    const res = await fetch(`${apiBase}/api/user/profile`, {
+      headers: {
+        cookie: cookies.toString()
+      }
+    });
     if (res.ok) {
       profile = (await res.json()) as UserProfile;
     }
@@ -66,7 +78,11 @@ export const load: PageServerLoad = async ({ fetch, parent }) => {
   let company: CompanyProfile | null = null;
   if (isOwner && adminUser.tenant_id) {
     try {
-      const res = await fetch("/api/admin/company");
+      const res = await fetch(`${apiBase}/api/admin/company`, {
+        headers: {
+          cookie: cookies.toString()
+        }
+      });
       if (res.ok) {
         company = (await res.json()) as CompanyProfile;
       }
@@ -85,7 +101,8 @@ export const load: PageServerLoad = async ({ fetch, parent }) => {
 
 export const actions: Actions = {
   // ── Actualizar perfil pessoal ─────────────────────────────────────────────
-  update_profile: async ({ fetch, request }) => {
+  update_profile: async ({ fetch, request, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const body = {
       first_name: form.get("first_name")?.toString().trim() || null,
@@ -97,11 +114,12 @@ export const actions: Actions = {
     };
 
     const csrf = form.get("csrf_token")?.toString() ?? "";
-    const res = await fetch("/api/user/profile", {
+    const res = await fetch(`${apiBase}/api/user/profile`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         "x-csrf-token": csrf,
+        cookie: cookies.toString()
       },
       body: JSON.stringify(body),
     });
@@ -115,7 +133,8 @@ export const actions: Actions = {
   },
 
   // ── Alterar email ─────────────────────────────────────────────────────────
-  change_email: async ({ fetch, request }) => {
+  change_email: async ({ fetch, request, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const csrf = form.get("csrf_token")?.toString() ?? "";
     const body = {
@@ -123,11 +142,12 @@ export const actions: Actions = {
       new_email: form.get("new_email")?.toString().trim() ?? "",
     };
 
-    const res = await fetch("/api/user/profile/change-email", {
+    const res = await fetch(`${apiBase}/api/user/profile/change-email`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-csrf-token": csrf,
+        cookie: cookies.toString()
       },
       body: JSON.stringify(body),
     });
@@ -141,7 +161,8 @@ export const actions: Actions = {
   },
 
   // ── Alterar password ──────────────────────────────────────────────────────
-  change_password: async ({ fetch, request }) => {
+  change_password: async ({ fetch, request, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const csrf = form.get("csrf_token")?.toString() ?? "";
     const body = {
@@ -156,11 +177,12 @@ export const actions: Actions = {
       });
     }
 
-    const res = await fetch("/api/user/profile/change-password", {
+    const res = await fetch(`${apiBase}/api/user/profile/change-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-csrf-token": csrf,
+        cookie: cookies.toString()
       },
       body: JSON.stringify(body),
     });
@@ -174,7 +196,8 @@ export const actions: Actions = {
   },
 
   // ── Actualizar empresa (owner only) ──────────────────────────────────────
-  update_company: async ({ fetch, request }) => {
+  update_company: async ({ fetch, request, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const csrf = form.get("csrf_token")?.toString() ?? "";
     const body = {
@@ -184,11 +207,12 @@ export const actions: Actions = {
       website: form.get("website")?.toString().trim() || null,
     };
 
-    const res = await fetch("/api/admin/company", {
+    const res = await fetch(`${apiBase}/api/admin/company`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         "x-csrf-token": csrf,
+        cookie: cookies.toString()
       },
       body: JSON.stringify(body),
     });

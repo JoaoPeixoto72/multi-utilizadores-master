@@ -5,7 +5,14 @@
  */
 
 import { isRedirect } from '@sveltejs/kit';
+import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from './$types';
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 export interface ActivityItem {
   id: number;
@@ -20,7 +27,8 @@ export interface ActivityItem {
   created_at: number;
 }
 
-export const load: PageServerLoad = async ({ fetch, url, parent }) => {
+export const load: PageServerLoad = async ({ fetch, url, parent, cookies }) => {
+  const apiBase = getApiBase();
   const { adminUser } = await parent();
   const cursor = url.searchParams.get('cursor') || undefined;
   const actor_id = url.searchParams.get('actor_id') || undefined;
@@ -31,7 +39,11 @@ export const load: PageServerLoad = async ({ fetch, url, parent }) => {
   if (actor_id) params.set('actor_id', actor_id);
   if (action) params.set('action', action);
 
-  const res = await fetch(`/api/admin/activity?${params}`);
+  const res = await fetch(`${apiBase}/api/admin/activity?${params}`, {
+    headers: {
+      cookie: cookies.toString()
+    }
+  });
   const data = res.ok
     ? (await res.json()) as { items: ActivityItem[]; nextCursor: number | null }
     : { items: [], nextCursor: null };
@@ -45,14 +57,16 @@ export const load: PageServerLoad = async ({ fetch, url, parent }) => {
 };
 
 export const actions: Actions = {
-  clean: async ({ request, fetch }) => {
+  clean: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const form = await request.formData();
     const csrfToken = form.get('csrf_token')?.toString() ?? '';
     try {
-      const res = await fetch('/api/admin/activity', {
+      const res = await fetch(`${apiBase}/api/admin/activity`, {
         method: 'DELETE',
         headers: {
-          'x-csrf-token': csrfToken
+          'x-csrf-token': csrfToken,
+          cookie: cookies.toString()
         }
       });
       if (!res.ok) {

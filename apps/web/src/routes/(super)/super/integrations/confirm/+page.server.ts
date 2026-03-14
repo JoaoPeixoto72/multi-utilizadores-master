@@ -8,9 +8,17 @@
  */
 
 import { redirect } from "@sveltejs/kit";
+import { env } from "$env/dynamic/public";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ url, fetch }) => {
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
+
+export const load: PageServerLoad = async ({ url, fetch, cookies }) => {
+  const apiBase = getApiBase();
   const id    = url.searchParams.get("id");
   const token = url.searchParams.get("token");
 
@@ -21,7 +29,11 @@ export const load: PageServerLoad = async ({ url, fetch }) => {
   // Obter CSRF token
   let csrf = "";
   try {
-    const r = await fetch("/api/auth/csrf");
+    const r = await fetch(`${apiBase}/api/auth/csrf`, {
+      headers: {
+        cookie: cookies.toString()
+      }
+    });
     if (r.ok) {
       const d = (await r.json()) as { token: string };
       csrf = d.token ?? "";
@@ -30,16 +42,22 @@ export const load: PageServerLoad = async ({ url, fetch }) => {
 
   // 1. Marcar como testada (caso ainda não esteja)
   try {
-    await fetch(`/api/super/integrations/${id}/test`, {
+    await fetch(`${apiBase}/api/super/integrations/${id}/test`, {
       method: "POST",
-      headers: { "x-csrf-token": csrf },
+      headers: { 
+        "x-csrf-token": csrf,
+        cookie: cookies.toString()
+      },
     });
   } catch { /* ignorar erro de teste — prosseguir para activar */ }
 
   // 2. Activar a integração
-  const activateRes = await fetch(`/api/super/integrations/${id}/activate`, {
+  const activateRes = await fetch(`${apiBase}/api/super/integrations/${id}/activate`, {
     method: "POST",
-    headers: { "x-csrf-token": csrf },
+    headers: { 
+      "x-csrf-token": csrf,
+      cookie: cookies.toString()
+    },
   });
 
   if (activateRes.ok) {

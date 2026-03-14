@@ -9,7 +9,14 @@
  */
 
 import { error } from "@sveltejs/kit";
+import { env } from "$env/dynamic/public";
 import type { PageServerLoad } from "./$types";
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 interface ModuleEntry {
   id: string;
@@ -17,13 +24,18 @@ interface ModuleEntry {
   has_access: boolean;
 }
 
-export const load: PageServerLoad = async ({ fetch, params, parent }) => {
+export const load: PageServerLoad = async ({ fetch, params, parent, cookies }) => {
+  const apiBase = getApiBase();
   await parent(); // assegura guard de auth do layout
 
   const moduleId = params.id;
 
   try {
-    const res = await fetch("/api/user/modules");
+    const res = await fetch(`${apiBase}/api/user/modules`, {
+      headers: {
+        cookie: cookies.toString()
+      }
+    });
     if (!res.ok) {
       error(403, "Sem acesso a módulos.");
     }

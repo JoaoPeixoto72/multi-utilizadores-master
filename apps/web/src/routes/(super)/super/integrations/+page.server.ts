@@ -5,7 +5,14 @@
  * Novo: action "verify" envia email de teste e marca integração como testada.
  */
 
+import { env } from "$env/dynamic/public";
 import type { PageServerLoad, Actions } from "./$types";
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 interface Integration {
   id: string;
@@ -18,16 +25,26 @@ interface Integration {
   updated_at: string;
 }
 
-export const load: PageServerLoad = async ({ fetch }) => {
-  const res = await fetch("/api/super/integrations");
+export const load: PageServerLoad = async ({ fetch, cookies }) => {
+  const apiBase = getApiBase();
+  const res = await fetch(`${apiBase}/api/super/integrations`, {
+    headers: {
+      cookie: cookies.toString()
+    }
+  });
   const data: { data: Integration[] } = res.ok ? await res.json() : { data: [] };
   return { integrations: data.data ?? [] };
 };
 
 /** Obtém CSRF token para usar nas chamadas fetch internas */
-async function getCsrf(fetch: typeof globalThis.fetch): Promise<string> {
+async function getCsrf(fetch: typeof globalThis.fetch, cookies: { toString: () => string }): Promise<string> {
+  const apiBase = getApiBase();
   try {
-    const r = await fetch("/api/auth/csrf");
+    const r = await fetch(`${apiBase}/api/auth/csrf`, {
+      headers: {
+        cookie: cookies.toString()
+      }
+    });
     if (r.ok) {
       const d = (await r.json()) as { token: string };
       return d.token ?? "";
@@ -37,7 +54,7 @@ async function getCsrf(fetch: typeof globalThis.fetch): Promise<string> {
 }
 
 export const actions: Actions = {
-  create: async ({ fetch, request }) => {
+  create: async ({ fetch, request, cookies }) => {
     const form = await request.formData();
     const category    = form.get("category") as string;
     const provider    = form.get("provider") as string;
@@ -61,7 +78,7 @@ export const actions: Actions = {
       return { error: "Credenciais inválidas (JSON mal formatado)." };
     }
 
-    const csrf = await getCsrf(fetch);
+    const csrf = await getCsrf(fetch, cookies);
     const res = await fetch("/api/super/integrations", {
       method:  "POST",
       headers: { "Content-Type": "application/json", "x-csrf-token": csrf },
@@ -77,7 +94,7 @@ export const actions: Actions = {
     return { success: true };
   },
 
-  verify: async ({ fetch, request }) => {
+  verify: async ({ fetch, request, cookies }) => {
     /** Testa a integração e envia um email de confirmação real */
     const form  = await request.formData();
     const id    = form.get("id") as string;
@@ -87,7 +104,7 @@ export const actions: Actions = {
       return { verifyError: "Indique um email válido para receber o email de teste." };
     }
 
-    const csrf = await getCsrf(fetch);
+    const csrf = await getCsrf(fetch, cookies);
 
     // 1. Testar ping (valida API key)
     const testRes = await fetch(`/api/super/integrations/${id}/test`, {
@@ -115,10 +132,10 @@ export const actions: Actions = {
     return { verifySuccess: `Email de verificação enviado para ${email}. Verifique a sua caixa de entrada.` };
   },
 
-  test: async ({ fetch, request }) => {
+  test: async ({ fetch, request, cookies }) => {
     const form = await request.formData();
     const id   = form.get("id") as string;
-    const csrf = await getCsrf(fetch);
+    const csrf = await getCsrf(fetch, cookies);
     const res  = await fetch(`/api/super/integrations/${id}/test`, {
       method: "POST", headers: { "x-csrf-token": csrf },
     });
@@ -126,10 +143,10 @@ export const actions: Actions = {
     return { testResult: data };
   },
 
-  activate: async ({ fetch, request }) => {
+  activate: async ({ fetch, request, cookies }) => {
     const form = await request.formData();
     const id   = form.get("id") as string;
-    const csrf = await getCsrf(fetch);
+    const csrf = await getCsrf(fetch, cookies);
     const res  = await fetch(`/api/super/integrations/${id}/activate`, {
       method: "POST", headers: { "x-csrf-token": csrf },
     });
@@ -140,20 +157,20 @@ export const actions: Actions = {
     return { success: true };
   },
 
-  deactivate: async ({ fetch, request }) => {
+  deactivate: async ({ fetch, request, cookies }) => {
     const form = await request.formData();
     const id   = form.get("id") as string;
-    const csrf = await getCsrf(fetch);
+    const csrf = await getCsrf(fetch, cookies);
     await fetch(`/api/super/integrations/${id}/deactivate`, {
       method: "POST", headers: { "x-csrf-token": csrf },
     });
     return { success: true };
   },
 
-  delete: async ({ fetch, request }) => {
+  delete: async ({ fetch, request, cookies }) => {
     const form = await request.formData();
     const id   = form.get("id") as string;
-    const csrf = await getCsrf(fetch);
+    const csrf = await getCsrf(fetch, cookies);
     await fetch(`/api/super/integrations/${id}`, {
       method: "DELETE", headers: { "x-csrf-token": csrf },
     });

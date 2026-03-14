@@ -1,4 +1,11 @@
+import { env } from "$env/dynamic/public";
 import type { LayoutServerLoad } from "./$types";
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 /**
  * +layout.server.ts — carrega preferências de layout/tema/paleta dos cookies
@@ -6,15 +13,24 @@ import type { LayoutServerLoad } from "./$types";
  * Persistência via cookies (NUNCA localStorage — STACK_LOCK.md §14)
  */
 export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
+  console.log("[+layout.server.ts] load entered");
+  console.log("[+layout.server.ts] env.PUBLIC_API_URL =", env.PUBLIC_API_URL);
+
+  const apiBase = getApiBase();
+
   // Obter configurações globais da aplicação
   let appConfig: Record<string, string> = {};
   try {
-    const res = await fetch("/api/super/settings/config");
+    const configUrl = `${apiBase}/api/super/settings/config`;
+    console.log("[+layout.server.ts] calling GET", configUrl);
+    const res = await fetch(configUrl);
+    console.log("[+layout.server.ts] response status:", res.status);
     if (res.ok) {
-      const data = await res.json() as { config: Record<string, string> };
+      const data = (await res.json()) as { config: Record<string, string> };
       appConfig = data.config || {};
     }
-  } catch {
+  } catch (e) {
+    console.log("[+layout.server.ts] error fetching config:", e);
     // ignorar erros de fetch na configuração
   }
 
@@ -34,28 +50,76 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   const buttonTextColor = appConfig.ui_button_text_color ?? "";
 
   // Verificar sessão activa
-  let user: { id: string; email: string; role: string; tenant_id: string | null; is_owner: number; display_name: string | null } | null = null;
+  let user: {
+    id: string;
+    email: string;
+    role: string;
+    tenant_id: string | null;
+    is_owner: number;
+    display_name: string | null;
+  } | null = null;
   try {
-    const res = await fetch("/api/auth/me");
+    const authUrl = `${apiBase}/api/auth/me`;
+    console.log("[+layout.server.ts] calling GET", authUrl);
+    const res = await fetch(authUrl, {
+      headers: {
+        cookie: cookies.toString(),
+      },
+    });
+    console.log("[+layout.server.ts] response status:", res.status);
     if (res.ok) {
-      const data = (await res.json()) as { id: string; email: string; role: string; tenant_id: string | null; is_owner: number; display_name: string | null };
+      const data = (await res.json()) as {
+        id: string;
+        email: string;
+        role: string;
+        tenant_id: string | null;
+        is_owner: number;
+        display_name: string | null;
+      };
       user = data;
     }
-  } catch {
+  } catch (e) {
+    console.log("[+layout.server.ts] error fetching auth/me:", e);
     // ignorar erros de rede — não autenticado
   }
+  console.log("[+layout.server.ts] user is", user ? "present" : "null");
 
   // Obter CSRF token (necessário nos formulários de mutação)
   let csrfToken: string | null = null;
   try {
-    const res = await fetch("/api/auth/csrf");
+    const csrfUrl = `${apiBase}/api/auth/csrf`;
+    console.log("[+layout.server.ts] calling GET", csrfUrl);
+    const res = await fetch(csrfUrl, {
+      headers: {
+        cookie: cookies.toString(),
+      },
+    });
+    console.log("[+layout.server.ts] response status:", res.status);
     if (res.ok) {
       const data = (await res.json()) as { token: string };
       csrfToken = data.token;
     }
-  } catch {
+  } catch (e) {
+    console.log("[+layout.server.ts] error fetching auth/csrf:", e);
     // ignorar
   }
+  console.log("[+layout.server.ts] csrfToken is", csrfToken ? "present" : "missing");
 
-  return { layout, theme, palette, radius, fontFamily, borderActive, borderColor, inputBgColor, inputPadding, buttonRadius, buttonBgColor, buttonTextColor, user, csrfToken, appConfig };
+  return {
+    layout,
+    theme,
+    palette,
+    radius,
+    fontFamily,
+    borderActive,
+    borderColor,
+    inputBgColor,
+    inputPadding,
+    buttonRadius,
+    buttonBgColor,
+    buttonTextColor,
+    user,
+    csrfToken,
+    appConfig,
+  };
 };

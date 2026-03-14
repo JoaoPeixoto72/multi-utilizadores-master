@@ -9,7 +9,14 @@
  *   Collaborator       → vê módulos disponíveis
  */
 
+import { env } from "$env/dynamic/public";
 import type { PageServerLoad } from "./$types";
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 interface ModuleEntry {
   id: string;
@@ -24,7 +31,8 @@ interface TeamStats {
   total: { count: number; limit: number };
 }
 
-export const load: PageServerLoad = async ({ fetch, parent }) => {
+export const load: PageServerLoad = async ({ fetch, parent, cookies }) => {
+  const apiBase = getApiBase();
   const { adminUser } = await parent();
 
   const isAdmin =
@@ -44,7 +52,11 @@ export const load: PageServerLoad = async ({ fetch, parent }) => {
   if (isAdmin) {
     // Admins/owners/members: carregar estatísticas de equipa com limites
     try {
-      const statsRes = await fetch("/api/admin/team/stats");
+      const statsRes = await fetch(`${apiBase}/api/admin/team/stats`, {
+        headers: {
+          cookie: cookies.toString()
+        }
+      });
       if (statsRes.ok) {
         stats = (await statsRes.json()) as TeamStats;
       }
@@ -54,7 +66,11 @@ export const load: PageServerLoad = async ({ fetch, parent }) => {
   } else {
     // Colaboradores: carregar módulos disponíveis
     try {
-      const modulesRes = await fetch("/api/user/modules");
+      const modulesRes = await fetch(`${apiBase}/api/user/modules`, {
+        headers: {
+          cookie: cookies.toString()
+        }
+      });
       if (modulesRes.ok) {
         const data = (await modulesRes.json()) as { modules: ModuleEntry[] };
         modules = data.modules;

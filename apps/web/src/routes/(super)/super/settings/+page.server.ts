@@ -1,10 +1,22 @@
+import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
 
-export const load: PageServerLoad = async ({ platform, fetch }) => {
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
+
+export const load: PageServerLoad = async ({ platform, fetch, cookies }) => {
+  const apiBase = getApiBase();
   const env = (platform as any)?.env as Record<string, string | undefined> | undefined;
 
-  const res = await fetch("/api/super/settings/config");
+  const res = await fetch(`${apiBase}/api/super/settings/config`, {
+    headers: {
+      cookie: cookies.toString()
+    }
+  });
   const configData = res.ok ? (await res.json()) as { config: Record<string, string> } : { config: {} };
   const appConfig = configData.config;
 
@@ -37,6 +49,7 @@ export const load: PageServerLoad = async ({ platform, fetch }) => {
 
 export const actions: Actions = {
   default: async ({ request, fetch, cookies }) => {
+    const apiBase = getApiBase();
     const formData = await request.formData();
     const configData: Record<string, string> = {};
 
@@ -48,11 +61,12 @@ export const actions: Actions = {
 
     const csrfToken = formData.get("_csrf") as string || "";
 
-    const res = await fetch("/api/super/settings/config", {
+    const res = await fetch(`${apiBase}/api/super/settings/config`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         "x-csrf-token": csrfToken,
+        cookie: cookies.toString()
       },
       body: JSON.stringify(configData),
     });

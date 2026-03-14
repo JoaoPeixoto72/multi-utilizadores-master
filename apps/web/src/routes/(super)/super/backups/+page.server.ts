@@ -4,7 +4,14 @@
  * R: BUILD_PLAN.md §M8.4
  */
 
+import { env } from "$env/dynamic/public";
 import type { PageServerLoad } from './$types';
+
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
 
 interface BackupItem {
   id: string;
@@ -18,8 +25,13 @@ interface BackupItem {
   completed_at: number | null;
 }
 
-export const load: PageServerLoad = async ({ fetch }) => {
-  const res = await fetch('/api/super/backups');
+export const load: PageServerLoad = async ({ fetch, cookies }) => {
+  const apiBase = getApiBase();
+  const res = await fetch(`${apiBase}/api/super/backups`, {
+    headers: {
+      cookie: cookies.toString()
+    }
+  });
   const data = res.ok
     ? (await res.json()) as { items: BackupItem[]; nextCursor: number | null }
     : { items: [], nextCursor: null };

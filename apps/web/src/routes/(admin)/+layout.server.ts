@@ -12,9 +12,18 @@
  */
 
 import { redirect } from "@sveltejs/kit";
+import { env } from "$env/dynamic/public";
 import type { LayoutServerLoad } from "./$types";
 
-export const load: LayoutServerLoad = async ({ fetch }) => {
+function getApiBase(): string {
+  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
+  return apiBase;
+}
+
+export const load: LayoutServerLoad = async ({ fetch, cookies }) => {
+  const apiBase = getApiBase();
+
   // Obter utilizador actual
   let user: {
     id: string;
@@ -27,7 +36,11 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
   } | null = null;
 
   try {
-    const res = await fetch("/api/auth/me");
+    const res = await fetch(`${apiBase}/api/auth/me`, {
+      headers: {
+        cookie: cookies.toString()
+      }
+    });
     if (res.ok) {
       user = await res.json();
     }
@@ -59,11 +72,19 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
       is_temp_owner: user.is_temp_owner ?? 0,
       display_name: user.display_name ?? null,
     },
-    unreadNotifCount: await fetch("/api/user/notifications/unread-count")
+    unreadNotifCount: await fetch(`${apiBase}/api/user/notifications/unread-count`, {
+      headers: {
+        cookie: cookies.toString()
+      }
+    })
       .then((r) => r.ok ? r.json() : { count: 0 })
       .then((d) => (d as { count: number }).count ?? 0)
       .catch(() => 0),
-    navModules: await fetch("/api/user/nav")
+    navModules: await fetch(`${apiBase}/api/user/nav`, {
+      headers: {
+        cookie: cookies.toString()
+      }
+    })
       .then((r) => r.ok ? r.json() : { items: [] })
       .then((d) => (d as { items: { id: string; name_key: string; icon: string; integrations_required: string[] }[] }).items ?? [])
       .catch(() => []),
