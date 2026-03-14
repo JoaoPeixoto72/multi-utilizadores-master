@@ -12,8 +12,7 @@ import { hc } from "hono/client";
 import type { AppType } from "$api/index";
 
 // Instância singleton do cliente RPC tipado
-export const api = hc<AppType>(
-  typeof window !== "undefined" ? window.location.origin : "http://localhost:5173",
-);
+// Use relative API path in the browser to hit the local dev proxy at /api
+export const api = hc<AppType>("/api");
 
 export type ApiClient = typeof api;
