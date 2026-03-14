@@ -18,7 +18,6 @@
   let password = $state("");
 </script>
 
-```svelte
 <div class="auth-card">
   <!-- Marca -->
   <div class="auth-brand">
