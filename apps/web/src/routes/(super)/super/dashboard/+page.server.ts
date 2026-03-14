@@ -3,14 +3,7 @@
  *
  * R: BUILD_PLAN.md §M2.6
  */
-import { env } from "$env/dynamic/public";
 import type { PageServerLoad } from "./$types";
-
-function getApiBase(): string {
-  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
-  return apiBase;
-}
 
 interface StatsResponse {
   active: number;
@@ -30,28 +23,38 @@ interface TenantsResponse {
   meta: StatsResponse;
 }
 
-export const load: PageServerLoad = async ({ fetch, cookies }) => {
-  const apiBase = getApiBase();
+export const load: PageServerLoad = async ({ platform, cookies }) => {
   // Buscar stats + recentes (todos os status)
   const [allRes, activeRes] = await Promise.all([
-    fetch(`${apiBase}/api/super/tenants?limit=5`, {
-      headers: {
-        cookie: cookies.toString()
-      }
-    }),
-    fetch(`${apiBase}/api/super/tenants?limit=5&status=active`, {
-      headers: {
-        cookie: cookies.toString()
-      }
-    }),
+    platform.env.API.fetch(
+      new Request(`https://internal/api/super/tenants?limit=5`, {
+        headers: {
+          cookie: cookies.toString(),
+        },
+      }),
+    ),
+    platform.env.API.fetch(
+      new Request(`https://internal/api/super/tenants?limit=5&status=active`, {
+        headers: {
+          cookie: cookies.toString(),
+        },
+      }),
+    ),
   ]);
+
+  const allText = await allRes.text();
+  console.log("[super/dashboard] all response status:", allRes.status);
+  console.log("[super/dashboard] all response body:", allText);
 
   if (!allRes.ok) {
     return { stats: { active: 0, inactive: 0, pending: 0 }, recent: [], activeCompanies: [] };
   }
 
-  const body = (await allRes.json()) as TenantsResponse;
-  const activeBody = activeRes.ok ? (await activeRes.json()) as TenantsResponse : { data: [] };
+  const body = JSON.parse(allText) as TenantsResponse;
+  const activeText = await activeRes.text();
+  console.log("[super/dashboard] active response status:", activeRes.status);
+  console.log("[super/dashboard] active response body:", activeText);
+  const activeBody = activeRes.ok ? (JSON.parse(activeText) as TenantsResponse) : { data: [] };
 
   return {
     stats: body.meta,

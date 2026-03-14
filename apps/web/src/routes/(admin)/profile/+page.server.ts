@@ -16,14 +16,7 @@
  */
 
 import { fail } from "@sveltejs/kit";
-import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from "./$types";
-
-function getApiBase(): string {
-  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
-  return apiBase;
-}
 
 interface UserProfile {
   id: string;
@@ -54,22 +47,27 @@ interface CompanyProfile {
   storage_limit: number;
 }
 
-export const load: PageServerLoad = async ({ fetch, parent, cookies }) => {
-  const apiBase = getApiBase();
+export const load: PageServerLoad = async ({ platform, parent, cookies }) => {
   const { adminUser } = await parent();
 
   // Carregar perfil
   let profile: UserProfile | null = null;
   try {
-    const res = await fetch(`${apiBase}/api/user/profile`, {
-      headers: {
-        cookie: cookies.toString()
-      }
-    });
+    const res = await platform.env.API.fetch(
+      new Request(`https://internal/api/user/profile`, {
+        headers: {
+          cookie: cookies.toString(),
+        },
+      }),
+    );
+    const bodyText = await res.text();
+    console.log("[admin/profile] profile response status:", res.status);
+    console.log("[admin/profile] profile response body:", bodyText);
     if (res.ok) {
-      profile = (await res.json()) as UserProfile;
+      profile = JSON.parse(bodyText) as UserProfile;
     }
-  } catch {
+  } catch (e) {
+    console.log("[admin/profile] error loading profile:", e);
     // perfil vazio em caso de erro
   }
 
@@ -78,15 +76,21 @@ export const load: PageServerLoad = async ({ fetch, parent, cookies }) => {
   let company: CompanyProfile | null = null;
   if (isOwner && adminUser.tenant_id) {
     try {
-      const res = await fetch(`${apiBase}/api/admin/company`, {
-        headers: {
-          cookie: cookies.toString()
-        }
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/company`, {
+          headers: {
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/profile] company response status:", res.status);
+      console.log("[admin/profile] company response body:", bodyText);
       if (res.ok) {
-        company = (await res.json()) as CompanyProfile;
+        company = JSON.parse(bodyText) as CompanyProfile;
       }
-    } catch {
+    } catch (e) {
+      console.log("[admin/profile] error loading company:", e);
       // empresa vazia em caso de erro
     }
   }
@@ -101,8 +105,7 @@ export const load: PageServerLoad = async ({ fetch, parent, cookies }) => {
 
 export const actions: Actions = {
   // ── Actualizar perfil pessoal ─────────────────────────────────────────────
-  update_profile: async ({ fetch, request, cookies }) => {
-    const apiBase = getApiBase();
+  update_profile: async ({ platform, request, cookies }) => {
     const form = await request.formData();
     const body = {
       first_name: form.get("first_name")?.toString().trim() || null,
@@ -114,18 +117,23 @@ export const actions: Actions = {
     };
 
     const csrf = form.get("csrf_token")?.toString() ?? "";
-    const res = await fetch(`${apiBase}/api/user/profile`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "x-csrf-token": csrf,
-        cookie: cookies.toString()
-      },
-      body: JSON.stringify(body),
-    });
+    const res = await platform.env.API.fetch(
+      new Request(`https://internal/api/user/profile`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": csrf,
+          cookie: cookies.toString(),
+        },
+        body: JSON.stringify(body),
+      }),
+    );
+    const bodyText = await res.text();
+    console.log("[admin/profile] update_profile response status:", res.status);
+    console.log("[admin/profile] update_profile response body:", bodyText);
 
     if (!res.ok) {
-      const err = (await res.json()) as { detail?: string };
+      const err = JSON.parse(bodyText) as { detail?: string };
       return fail(res.status, { action: "update_profile", error: err.detail ?? "Erro ao guardar." });
     }
 
@@ -133,8 +141,7 @@ export const actions: Actions = {
   },
 
   // ── Alterar email ─────────────────────────────────────────────────────────
-  change_email: async ({ fetch, request, cookies }) => {
-    const apiBase = getApiBase();
+  change_email: async ({ platform, request, cookies }) => {
     const form = await request.formData();
     const csrf = form.get("csrf_token")?.toString() ?? "";
     const body = {
@@ -142,18 +149,23 @@ export const actions: Actions = {
       new_email: form.get("new_email")?.toString().trim() ?? "",
     };
 
-    const res = await fetch(`${apiBase}/api/user/profile/change-email`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-csrf-token": csrf,
-        cookie: cookies.toString()
-      },
-      body: JSON.stringify(body),
-    });
+    const res = await platform.env.API.fetch(
+      new Request(`https://internal/api/user/profile/change-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": csrf,
+          cookie: cookies.toString(),
+        },
+        body: JSON.stringify(body),
+      }),
+    );
+    const bodyText = await res.text();
+    console.log("[admin/profile] change_email response status:", res.status);
+    console.log("[admin/profile] change_email response body:", bodyText);
 
     if (!res.ok) {
-      const err = (await res.json()) as { detail?: string };
+      const err = JSON.parse(bodyText) as { detail?: string };
       return fail(res.status, { action: "change_email", error: err.detail ?? "Erro." });
     }
 
@@ -161,8 +173,7 @@ export const actions: Actions = {
   },
 
   // ── Alterar password ──────────────────────────────────────────────────────
-  change_password: async ({ fetch, request, cookies }) => {
-    const apiBase = getApiBase();
+  change_password: async ({ platform, request, cookies }) => {
     const form = await request.formData();
     const csrf = form.get("csrf_token")?.toString() ?? "";
     const body = {
@@ -177,18 +188,23 @@ export const actions: Actions = {
       });
     }
 
-    const res = await fetch(`${apiBase}/api/user/profile/change-password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-csrf-token": csrf,
-        cookie: cookies.toString()
-      },
-      body: JSON.stringify(body),
-    });
+    const res = await platform.env.API.fetch(
+      new Request(`https://internal/api/user/profile/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": csrf,
+          cookie: cookies.toString(),
+        },
+        body: JSON.stringify(body),
+      }),
+    );
+    const bodyText = await res.text();
+    console.log("[admin/profile] change_password response status:", res.status);
+    console.log("[admin/profile] change_password response body:", bodyText);
 
     if (!res.ok) {
-      const err = (await res.json()) as { detail?: string };
+      const err = JSON.parse(bodyText) as { detail?: string };
       return fail(res.status, { action: "change_password", error: err.detail ?? "Erro." });
     }
 
@@ -196,8 +212,7 @@ export const actions: Actions = {
   },
 
   // ── Actualizar empresa (owner only) ──────────────────────────────────────
-  update_company: async ({ fetch, request, cookies }) => {
-    const apiBase = getApiBase();
+  update_company: async ({ platform, request, cookies }) => {
     const form = await request.formData();
     const csrf = form.get("csrf_token")?.toString() ?? "";
     const body = {
@@ -207,18 +222,23 @@ export const actions: Actions = {
       website: form.get("website")?.toString().trim() || null,
     };
 
-    const res = await fetch(`${apiBase}/api/admin/company`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "x-csrf-token": csrf,
-        cookie: cookies.toString()
-      },
-      body: JSON.stringify(body),
-    });
+    const res = await platform.env.API.fetch(
+      new Request(`https://internal/api/admin/company`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": csrf,
+          cookie: cookies.toString(),
+        },
+        body: JSON.stringify(body),
+      }),
+    );
+    const bodyText = await res.text();
+    console.log("[admin/profile] update_company response status:", res.status);
+    console.log("[admin/profile] update_company response body:", bodyText);
 
     if (!res.ok) {
-      const err = (await res.json()) as { detail?: string };
+      const err = JSON.parse(bodyText) as { detail?: string };
       return fail(res.status, {
         action: "update_company",
         error: err.detail ?? "Erro ao guardar empresa.",

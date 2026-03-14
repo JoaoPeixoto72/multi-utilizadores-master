@@ -9,14 +9,7 @@
  *   Collaborator       → vê módulos disponíveis
  */
 
-import { env } from "$env/dynamic/public";
 import type { PageServerLoad } from "./$types";
-
-function getApiBase(): string {
-  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
-  return apiBase;
-}
 
 interface ModuleEntry {
   id: string;
@@ -31,8 +24,7 @@ interface TeamStats {
   total: { count: number; limit: number };
 }
 
-export const load: PageServerLoad = async ({ fetch, parent, cookies }) => {
-  const apiBase = getApiBase();
+export const load: PageServerLoad = async ({ platform, parent, cookies }) => {
   const { adminUser } = await parent();
 
   const isAdmin =
@@ -52,30 +44,42 @@ export const load: PageServerLoad = async ({ fetch, parent, cookies }) => {
   if (isAdmin) {
     // Admins/owners/members: carregar estatísticas de equipa com limites
     try {
-      const statsRes = await fetch(`${apiBase}/api/admin/team/stats`, {
-        headers: {
-          cookie: cookies.toString()
-        }
-      });
+      const statsRes = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/stats`, {
+          headers: {
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const statsText = await statsRes.text();
+      console.log("[admin/dashboard] stats response status:", statsRes.status);
+      console.log("[admin/dashboard] stats response body:", statsText);
       if (statsRes.ok) {
-        stats = (await statsRes.json()) as TeamStats;
+        stats = JSON.parse(statsText) as TeamStats;
       }
-    } catch {
+    } catch (e) {
+      console.log("[admin/dashboard] error loading stats:", e);
       // ignorar erros — mostrar estado vazio
     }
   } else {
     // Colaboradores: carregar módulos disponíveis
     try {
-      const modulesRes = await fetch(`${apiBase}/api/user/modules`, {
-        headers: {
-          cookie: cookies.toString()
-        }
-      });
+      const modulesRes = await platform.env.API.fetch(
+        new Request(`https://internal/api/user/modules`, {
+          headers: {
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const modulesText = await modulesRes.text();
+      console.log("[admin/dashboard] modules response status:", modulesRes.status);
+      console.log("[admin/dashboard] modules response body:", modulesText);
       if (modulesRes.ok) {
-        const data = (await modulesRes.json()) as { modules: ModuleEntry[] };
+        const data = JSON.parse(modulesText) as { modules: ModuleEntry[] };
         modules = data.modules;
       }
-    } catch {
+    } catch (e) {
+      console.log("[admin/dashboard] error loading modules:", e);
       // ignorar erros
     }
   }

@@ -5,14 +5,7 @@
  */
 
 import { isRedirect } from '@sveltejs/kit';
-import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from './$types';
-
-function getApiBase(): string {
-  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
-  return apiBase;
-}
 
 export interface ActivityItem {
   id: number;
@@ -27,8 +20,7 @@ export interface ActivityItem {
   created_at: number;
 }
 
-export const load: PageServerLoad = async ({ fetch, url, parent, cookies }) => {
-  const apiBase = getApiBase();
+export const load: PageServerLoad = async ({ platform, url, parent, cookies }) => {
   const { adminUser } = await parent();
   const cursor = url.searchParams.get('cursor') || undefined;
   const actor_id = url.searchParams.get('actor_id') || undefined;
@@ -39,13 +31,18 @@ export const load: PageServerLoad = async ({ fetch, url, parent, cookies }) => {
   if (actor_id) params.set('actor_id', actor_id);
   if (action) params.set('action', action);
 
-  const res = await fetch(`${apiBase}/api/admin/activity?${params}`, {
-    headers: {
-      cookie: cookies.toString()
-    }
-  });
+  const res = await platform.env.API.fetch(
+    new Request(`https://internal/api/admin/activity?${params}`, {
+      headers: {
+        cookie: cookies.toString(),
+      },
+    }),
+  );
+  const bodyText = await res.text();
+  console.log("[admin/activity] load response status:", res.status);
+  console.log("[admin/activity] load response body:", bodyText);
   const data = res.ok
-    ? (await res.json()) as { items: ActivityItem[]; nextCursor: number | null }
+    ? (JSON.parse(bodyText) as { items: ActivityItem[]; nextCursor: number | null })
     : { items: [], nextCursor: null };
 
   return {
@@ -57,27 +54,31 @@ export const load: PageServerLoad = async ({ fetch, url, parent, cookies }) => {
 };
 
 export const actions: Actions = {
-  clean: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  clean: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const csrfToken = form.get('csrf_token')?.toString() ?? '';
     try {
-      const res = await fetch(`${apiBase}/api/admin/activity`, {
-        method: 'DELETE',
-        headers: {
-          'x-csrf-token': csrfToken,
-          cookie: cookies.toString()
-        }
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/activity`, {
+          method: 'DELETE',
+          headers: {
+            'x-csrf-token': csrfToken,
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/activity] clean response status:", res.status);
+      console.log("[admin/activity] clean response body:", bodyText);
       if (!res.ok) {
         let msg = 'Erro ao limpar histórico';
         try {
-          const err = (await res.json()) as { detail?: string };
+          const err = JSON.parse(bodyText) as { detail?: string };
           msg = err.detail ?? msg;
         } catch { }
         return { success: false, error: msg };
       }
-      const data = (await res.json()) as { deleted: number };
+      const data = JSON.parse(bodyText) as { deleted: number };
       return { success: true, deleted: data.deleted };
     } catch (e) {
       if (isRedirect(e)) throw e;

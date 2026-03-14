@@ -5,14 +5,7 @@
  */
 
 import { isRedirect } from '@sveltejs/kit';
-import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from './$types';
-
-function getApiBase(): string {
-  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
-  return apiBase;
-}
 
 interface BackupItem {
   id: string;
@@ -34,27 +27,36 @@ interface BackupAutoConfig {
   retention_days: number;
 }
 
-export const load: PageServerLoad = async ({ fetch, cookies }) => {
-  const apiBase = getApiBase();
+export const load: PageServerLoad = async ({ platform, cookies }) => {
   const [backupsRes, configRes] = await Promise.all([
-    fetch(`${apiBase}/api/admin/backups`, {
-      headers: {
-        cookie: cookies.toString()
-      }
-    }),
-    fetch(`${apiBase}/api/admin/backups/config`, {
-      headers: {
-        cookie: cookies.toString()
-      }
-    }),
+    platform.env.API.fetch(
+      new Request(`https://internal/api/admin/backups`, {
+        headers: {
+          cookie: cookies.toString(),
+        },
+      }),
+    ),
+    platform.env.API.fetch(
+      new Request(`https://internal/api/admin/backups/config`, {
+        headers: {
+          cookie: cookies.toString(),
+        },
+      }),
+    ),
   ]);
 
+  const backupsText = await backupsRes.text();
+  console.log("[admin/backups] backups response status:", backupsRes.status);
+  console.log("[admin/backups] backups response body:", backupsText);
   const backupsData = backupsRes.ok
-    ? (await backupsRes.json()) as { items: BackupItem[]; nextCursor: number | null }
+    ? (JSON.parse(backupsText) as { items: BackupItem[]; nextCursor: number | null })
     : { items: [], nextCursor: null };
 
+  const configText = await configRes.text();
+  console.log("[admin/backups] config response status:", configRes.status);
+  console.log("[admin/backups] config response body:", configText);
   const config: BackupAutoConfig = configRes.ok
-    ? await configRes.json()
+    ? JSON.parse(configText)
     : { enabled: false, frequency: 'weekly', day_of_week: 0, retention_days: 30 };
 
   return {
@@ -65,25 +67,29 @@ export const load: PageServerLoad = async ({ fetch, cookies }) => {
 };
 
 export const actions: Actions = {
-  create: async ({ fetch, request, cookies }) => {
-    const apiBase = getApiBase();
+  create: async ({ platform, request, cookies }) => {
     try {
       const form = await request.formData();
       const type = (form.get('type') as string) || 'db_only';
       const csrf = form.get('_csrf')?.toString() ?? '';
 
-      const res = await fetch(`${apiBase}/api/admin/backups`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': csrf,
-          cookie: cookies.toString()
-        },
-        body: JSON.stringify({ type }),
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/backups`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-csrf-token': csrf,
+            cookie: cookies.toString(),
+          },
+          body: JSON.stringify({ type }),
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/backups] create response status:", res.status);
+      console.log("[admin/backups] create response body:", bodyText);
 
       if (!res.ok) {
-        const err = (await res.json()) as { detail?: string };
+        const err = JSON.parse(bodyText) as { detail?: string };
         return { success: false, error: err.detail ?? 'Erro ao criar backup' };
       }
 
@@ -94,22 +100,26 @@ export const actions: Actions = {
     }
   },
 
-  delete: async ({ fetch, request, cookies }) => {
-    const apiBase = getApiBase();
+  delete: async ({ platform, request, cookies }) => {
     try {
       const form = await request.formData();
       const id = form.get('id') as string;
       const csrf = form.get('_csrf')?.toString() ?? '';
 
-      const res = await fetch(`${apiBase}/api/admin/backups/${id}`, {
-        method: 'DELETE',
-        headers: { 
-          'x-csrf-token': csrf,
-          cookie: cookies.toString()
-        }
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/backups/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'x-csrf-token': csrf,
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/backups] delete response status:", res.status);
+      console.log("[admin/backups] delete response body:", bodyText);
       if (!res.ok) {
-        const err = (await res.json()) as { detail?: string };
+        const err = JSON.parse(bodyText) as { detail?: string };
         return { success: false, error: err.detail ?? 'Erro ao eliminar backup' };
       }
 
@@ -120,8 +130,7 @@ export const actions: Actions = {
     }
   },
 
-  update_config: async ({ fetch, request, cookies }) => {
-    const apiBase = getApiBase();
+  update_config: async ({ platform, request, cookies }) => {
     try {
       const form = await request.formData();
       const csrf = form.get('_csrf')?.toString() ?? '';
@@ -132,18 +141,23 @@ export const actions: Actions = {
         retention_days: Number(form.get('retention_days') ?? 30),
       };
 
-      const res = await fetch(`${apiBase}/api/admin/backups/config`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': csrf,
-          cookie: cookies.toString()
-        },
-        body: JSON.stringify(config),
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/backups/config`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-csrf-token': csrf,
+            cookie: cookies.toString(),
+          },
+          body: JSON.stringify(config),
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/backups] update_config response status:", res.status);
+      console.log("[admin/backups] update_config response body:", bodyText);
 
       if (!res.ok) {
-        const err = (await res.json()) as { detail?: string };
+        const err = JSON.parse(bodyText) as { detail?: string };
         return { success: false, error: err.detail ?? 'Erro ao actualizar configuração' };
       }
 

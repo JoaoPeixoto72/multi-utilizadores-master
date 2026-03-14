@@ -9,14 +9,7 @@
  */
 
 import { error } from "@sveltejs/kit";
-import { env } from "$env/dynamic/public";
 import type { PageServerLoad } from "./$types";
-
-function getApiBase(): string {
-  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
-  return apiBase;
-}
 
 interface ModuleEntry {
   id: string;
@@ -24,23 +17,27 @@ interface ModuleEntry {
   has_access: boolean;
 }
 
-export const load: PageServerLoad = async ({ fetch, params, parent, cookies }) => {
-  const apiBase = getApiBase();
+export const load: PageServerLoad = async ({ platform, params, parent, cookies }) => {
   await parent(); // assegura guard de auth do layout
 
   const moduleId = params.id;
 
   try {
-    const res = await fetch(`${apiBase}/api/user/modules`, {
-      headers: {
-        cookie: cookies.toString()
-      }
-    });
+    const res = await platform.env.API.fetch(
+      new Request(`https://internal/api/user/modules`, {
+        headers: {
+          cookie: cookies.toString(),
+        },
+      }),
+    );
+    const bodyText = await res.text();
+    console.log("[admin/modules/id] response status:", res.status);
+    console.log("[admin/modules/id] response body:", bodyText);
     if (!res.ok) {
       error(403, "Sem acesso a módulos.");
     }
 
-    const data = (await res.json()) as { modules: ModuleEntry[] };
+    const data = JSON.parse(bodyText) as { modules: ModuleEntry[] };
     const mod = data.modules.find((m) => m.id === moduleId);
 
     if (!mod) {

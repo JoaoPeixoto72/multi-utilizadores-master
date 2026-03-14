@@ -6,15 +6,8 @@
  * R: briefing.md §3.1 — após setup, super user vai para /super/dashboard
  * R: briefing.md §3.1 — setup fica indisponível após execução
  */
-import { env } from "$env/dynamic/public";
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
-
-function getApiBase(): string {
-  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
-  return apiBase;
-}
 
 // SvelteKit redirect() lança uma excepção especial — relançar sempre
 function isRedirect(e: unknown): boolean {
@@ -27,41 +20,43 @@ function isRedirect(e: unknown): boolean {
   );
 }
 
-export const load: PageServerLoad = async ({ parent, fetch }) => {
+export const load: PageServerLoad = async ({ parent, platform }) => {
   console.log("[setup/+page.server.ts] load entered");
-  console.log("[setup/+page.server.ts] env.PUBLIC_API_URL =", env.PUBLIC_API_URL);
 
   const { user, csrfToken } = await parent();
 
-  console.log("[setup/+page.server.ts] csrfToken from parent is", csrfToken ? "present" : "missing");
+  console.log(
+    "[setup/+page.server.ts] csrfToken from parent is",
+    csrfToken ? "present" : "missing",
+  );
 
   // Se já autenticado como super_user, vai para dashboard
   if (user) {
     const u = user as { role?: string };
     if (u.role === "super_user") {
-      redirect(302, "/super/dashboard");
+      throw redirect(302, "/super/dashboard");
     }
-    redirect(302, "/");
+    throw redirect(302, "/");
   }
 
   // Verificar se o setup já foi feito
   try {
-    const apiBase = getApiBase();
-    const setupUrl = `${apiBase}/api/setup`;
+    const setupUrl = "https://internal/api/setup";
     console.log("[setup/+page.server.ts] calling GET", setupUrl);
-    const res = await fetch(setupUrl);
+    const res = await platform.env.API.fetch(new Request(setupUrl));
+    const bodyText = await res.text();
     console.log("[setup/+page.server.ts] response status:", res.status);
+    console.log("[setup/+page.server.ts] response body:", bodyText);
+
     if (res.ok) {
-      const data = (await res.json()) as { available: boolean };
+      const data = JSON.parse(bodyText) as { available: boolean };
       if (!data.available) {
-        // Setup já feito — redirecionar para login
-        redirect(302, "/login");
+        throw redirect(302, "/login");
       }
     }
   } catch (e) {
-    console.log("[setup/+page.server.ts] error:", e);
-    // Relançar Redirect (não é erro de rede — é uma excepção especial do SvelteKit)
     if (isRedirect(e)) throw e;
+    console.log("[setup/+page.server.ts] error:", e);
     // Em caso de erro de rede, mostrar o formulário de qualquer forma
   }
 
@@ -69,7 +64,7 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, fetch, cookies }) => {
+  default: async ({ request, platform, cookies }) => {
     const data = await request.formData();
     const email = data.get("email")?.toString() ?? "";
     const password = data.get("password")?.toString() ?? "";
@@ -84,28 +79,33 @@ export const actions: Actions = {
     }
 
     try {
-      const apiBase = getApiBase();
-      const setupUrl = `${apiBase}/api/setup`;
+      const setupUrl = "https://internal/api/setup";
       console.log("[setup/+page.server.ts] calling POST", setupUrl);
-      const res = await fetch(setupUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-csrf-token": csrf,
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await platform.env.API.fetch(
+        new Request(setupUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-csrf-token": csrf,
+          },
+          body: JSON.stringify({ email, password }),
+        }),
+      );
 
+      const bodyText = await res.text();
       console.log("[setup/+page.server.ts] response status:", res.status);
-      console.log("[setup/+page.server.ts] response ok:", res.ok);
+      console.log("[setup/+page.server.ts] response body:", bodyText);
 
       if (res.status === 404) {
         return fail(409, { error: "already_done", email });
       }
 
       if (res.status === 422) {
-        const body = (await res.json()) as { errors?: Array<{ field: string; message: string }> };
+        const body = JSON.parse(bodyText) as {
+          errors?: Array<{ field: string; message: string }>;
+        };
         console.log("[setup/+page.server.ts] 422 response body:", body);
+
         const pwdError = body.errors?.find((e: { field: string }) => e.field === "password");
         return fail(422, {
           error: pwdError ? "password_policy" : "validation",
@@ -141,10 +141,10 @@ export const actions: Actions = {
       }
 
       // Super user vai directo para o dashboard após setup
-      redirect(302, "/super/dashboard");
+      throw redirect(302, "/super/dashboard");
     } catch (e) {
-      console.log("[setup/+page.server.ts] action error:", e);
       if (isRedirect(e)) throw e;
+      console.log("[setup/+page.server.ts] action error:", e);
       return fail(500, { error: "generic", email });
     }
   },

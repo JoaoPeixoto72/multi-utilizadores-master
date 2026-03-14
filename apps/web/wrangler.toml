@@ -11,5 +11,9 @@ binding = "ASSETS"
 enabled = true
 
 [vars]
-PUBLIC_API_URL = "https://arch-api-production.acemang-jedi.workers.dev"
 APP_ENV = "production"
+
+[[services]]
+binding = "API"
+service = "arch-api-production"
+

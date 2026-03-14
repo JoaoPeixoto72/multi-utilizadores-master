@@ -1,23 +1,20 @@
-import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
 
-function getApiBase(): string {
-  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
-  return apiBase;
-}
-
-export const load: PageServerLoad = async ({ platform, fetch, cookies }) => {
-  const apiBase = getApiBase();
+export const load: PageServerLoad = async ({ platform, cookies }) => {
   const env = (platform as any)?.env as Record<string, string | undefined> | undefined;
 
-  const res = await fetch(`${apiBase}/api/super/settings/config`, {
-    headers: {
-      cookie: cookies.toString()
-    }
-  });
-  const configData = res.ok ? (await res.json()) as { config: Record<string, string> } : { config: {} };
+  const res = await platform.env.API.fetch(
+    new Request(`https://internal/api/super/settings/config`, {
+      headers: {
+        cookie: cookies.toString(),
+      },
+    }),
+  );
+  const bodyText = await res.text();
+  console.log("[super/settings] response status:", res.status);
+  console.log("[super/settings] response body:", bodyText);
+  const configData = res.ok ? (JSON.parse(bodyText) as { config: Record<string, string> }) : { config: {} };
   const appConfig = configData.config;
 
   // Variáveis não-secretas (leitura directa)
@@ -48,8 +45,7 @@ export const load: PageServerLoad = async ({ platform, fetch, cookies }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  default: async ({ request, platform, cookies }) => {
     const formData = await request.formData();
     const configData: Record<string, string> = {};
 
@@ -61,20 +57,25 @@ export const actions: Actions = {
 
     const csrfToken = formData.get("_csrf") as string || "";
 
-    const res = await fetch(`${apiBase}/api/super/settings/config`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "x-csrf-token": csrfToken,
-        cookie: cookies.toString()
-      },
-      body: JSON.stringify(configData),
-    });
+    const res = await platform.env.API.fetch(
+      new Request(`https://internal/api/super/settings/config`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": csrfToken,
+          cookie: cookies.toString(),
+        },
+        body: JSON.stringify(configData),
+      }),
+    );
+    const bodyText = await res.text();
+    console.log("[super/settings] response status:", res.status);
+    console.log("[super/settings] response body:", bodyText);
 
     if (!res.ok) {
-      const errorData = (await res.json().catch(() => ({}))) as { detail?: string };
+      const errorData = (bodyText ? JSON.parse(bodyText) : {}) as { detail?: string };
       return fail(res.status, {
-        error: errorData.detail || "Erro ao guardar as configurações."
+        error: errorData.detail || "Erro ao guardar as configurações.",
       });
     }
 

@@ -8,14 +8,7 @@
  */
 
 import { fail } from "@sveltejs/kit";
-import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from "./$types";
-
-function getApiBase(): string {
-  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
-  return apiBase;
-}
 
 function isRedirect(e: unknown): boolean {
   return typeof e === "object" && e !== null && "status" in e && "location" in e;
@@ -50,8 +43,7 @@ interface PermissionRow {
   module_permissions: Record<string, unknown>;
 }
 
-export const load: PageServerLoad = async ({ fetch, parent, url, cookies }) => {
-  const apiBase = getApiBase();
+export const load: PageServerLoad = async ({ platform, parent, url, cookies }) => {
   const { adminUser } = await parent();
   const tab = url.searchParams.get("tab") ?? "collaborators";
 
@@ -64,54 +56,82 @@ export const load: PageServerLoad = async ({ fetch, parent, url, cookies }) => {
 
   try {
     const [collabRes, membersRes, invitesRes, clientsRes] = await Promise.all([
-      fetch(`${apiBase}/api/admin/team/collaborators?limit=50`, {
-        headers: {
-          cookie: cookies.toString()
-        }
-      }),
-      fetch(`${apiBase}/api/admin/team/members?limit=50`, {
-        headers: {
-          cookie: cookies.toString()
-        }
-      }),
-      fetch(`${apiBase}/api/admin/team/invitations?limit=50`, {
-        headers: {
-          cookie: cookies.toString()
-        }
-      }),
-      fetch(`${apiBase}/api/admin/team/clients?limit=50`, {
-        headers: {
-          cookie: cookies.toString()
-        }
-      }),
+      platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/collaborators?limit=50`, {
+          headers: {
+            cookie: cookies.toString(),
+          },
+        }),
+      ),
+      platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/members?limit=50`, {
+          headers: {
+            cookie: cookies.toString(),
+          },
+        }),
+      ),
+      platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/invitations?limit=50`, {
+          headers: {
+            cookie: cookies.toString(),
+          },
+        }),
+      ),
+      platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/clients?limit=50`, {
+          headers: {
+            cookie: cookies.toString(),
+          },
+        }),
+      ),
     ]);
 
+    const collabText = await collabRes.text();
+    console.log("[admin/team] collab response status:", collabRes.status);
+    console.log("[admin/team] collab response body:", collabText);
     if (collabRes.ok) {
-      const data = await collabRes.json() as { rows: TeamUser[] };
+      const data = JSON.parse(collabText) as { rows: TeamUser[] };
       collaborators = data.rows;
     }
+
+    const membersText = await membersRes.text();
+    console.log("[admin/team] members response status:", membersRes.status);
+    console.log("[admin/team] members response body:", membersText);
     if (membersRes.ok) {
-      const data = await membersRes.json() as { rows: TeamUser[] };
+      const data = JSON.parse(membersText) as { rows: TeamUser[] };
       members = data.rows;
     }
+
+    const invitesText = await invitesRes.text();
+    console.log("[admin/team] invites response status:", invitesRes.status);
+    console.log("[admin/team] invites response body:", invitesText);
     if (invitesRes.ok) {
-      const data = await invitesRes.json() as { rows: Invitation[] };
+      const data = JSON.parse(invitesText) as { rows: Invitation[] };
       invitations = data.rows.filter(i => i.status !== "accepted");
     }
+
+    const clientsText = await clientsRes.text();
+    console.log("[admin/team] clients response status:", clientsRes.status);
+    console.log("[admin/team] clients response body:", clientsText);
     if (clientsRes.ok) {
-      const data = await clientsRes.json() as { rows: TeamUser[] };
+      const data = JSON.parse(clientsText) as { rows: TeamUser[] };
       clients = data.rows;
     }
 
     // Carregar permissões se tab=permissions
     if (tab === "permissions") {
-      const permRes = await fetch(`${apiBase}/api/admin/team/permissions`, {
-        headers: {
-          cookie: cookies.toString()
-        }
-      });
+      const permRes = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/permissions`, {
+          headers: {
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const permText = await permRes.text();
+      console.log("[admin/team] perm response status:", permRes.status);
+      console.log("[admin/team] perm response body:", permText);
       if (permRes.ok) {
-        const data = await permRes.json() as { rows: PermissionRow[] };
+        const data = JSON.parse(permText) as { rows: PermissionRow[] };
         permissions = data.rows;
       }
     }
@@ -134,8 +154,7 @@ export const load: PageServerLoad = async ({ fetch, parent, url, cookies }) => {
 
 export const actions: Actions = {
   // ── Convidar membro/colaborador ─────────────────────────────────────────────
-  invite: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  invite: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const email = form.get("email")?.toString().trim() ?? "";
     const role = form.get("role")?.toString() ?? "collaborator";
@@ -149,18 +168,23 @@ export const actions: Actions = {
     }
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/team/invitations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-csrf-token": csrfToken,
-          cookie: cookies.toString()
-        },
-        body: JSON.stringify({ email, role }),
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/invitations`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-csrf-token": csrfToken,
+            cookie: cookies.toString(),
+          },
+          body: JSON.stringify({ email, role }),
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/team] invite response status:", res.status);
+      console.log("[admin/team] invite response body:", bodyText);
 
       if (!res.ok) {
-        const data = await res.json() as { detail?: string };
+        const data = JSON.parse(bodyText) as { detail?: string };
         const msg = data.detail ?? "Erro ao criar convite.";
         if (res.status === 409) {
           return fail(409, { invite_error: msg, email, role });
@@ -179,22 +203,26 @@ export const actions: Actions = {
   },
 
   // ── Desactivar colaborador ──────────────────────────────────────────────────
-  deactivate: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  deactivate: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/team/collaborators/${userId}/deactivate`, {
-        method: "POST",
-        headers: { 
-          "x-csrf-token": csrfToken,
-          cookie: cookies.toString()
-        },
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/collaborators/${userId}/deactivate`, {
+          method: "POST",
+          headers: {
+            "x-csrf-token": csrfToken,
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/team] deactivate response status:", res.status);
+      console.log("[admin/team] deactivate response body:", bodyText);
       if (!res.ok) {
-        const data = await res.json() as { detail?: string };
+        const data = JSON.parse(bodyText) as { detail?: string };
         return fail(res.status, { action_error: data.detail ?? "Erro ao desactivar." });
       }
       return { deactivate_success: true };
@@ -205,22 +233,26 @@ export const actions: Actions = {
   },
 
   // ── Reactivar colaborador ───────────────────────────────────────────────────
-  reactivate: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  reactivate: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/team/collaborators/${userId}/reactivate`, {
-        method: "POST",
-        headers: { 
-          "x-csrf-token": csrfToken,
-          cookie: cookies.toString()
-        },
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/collaborators/${userId}/reactivate`, {
+          method: "POST",
+          headers: {
+            "x-csrf-token": csrfToken,
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/team] reactivate response status:", res.status);
+      console.log("[admin/team] reactivate response body:", bodyText);
       if (!res.ok) {
-        const data = await res.json() as { detail?: string };
+        const data = JSON.parse(bodyText) as { detail?: string };
         return fail(res.status, { action_error: data.detail ?? "Erro ao reactivar." });
       }
       return { reactivate_success: true };
@@ -231,22 +263,26 @@ export const actions: Actions = {
   },
 
   // ── Eliminar colaborador ────────────────────────────────────────────────────
-  delete_collaborator: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  delete_collaborator: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/team/collaborators/${userId}`, {
-        method: "DELETE",
-        headers: { 
-          "x-csrf-token": csrfToken,
-          cookie: cookies.toString()
-        },
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/collaborators/${userId}`, {
+          method: "DELETE",
+          headers: {
+            "x-csrf-token": csrfToken,
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/team] delete_collaborator response status:", res.status);
+      console.log("[admin/team] delete_collaborator response body:", bodyText);
       if (!res.ok) {
-        const data = await res.json() as { detail?: string };
+        const data = JSON.parse(bodyText) as { detail?: string };
         return fail(res.status, { action_error: data.detail ?? "Erro ao eliminar." });
       }
       return { delete_success: true };
@@ -257,22 +293,26 @@ export const actions: Actions = {
   },
 
   // ── Eliminar sócio ──────────────────────────────────────────────────────────
-  delete_member: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  delete_member: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/team/members/${userId}`, {
-        method: "DELETE",
-        headers: { 
-          "x-csrf-token": csrfToken,
-          cookie: cookies.toString()
-        },
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/members/${userId}`, {
+          method: "DELETE",
+          headers: {
+            "x-csrf-token": csrfToken,
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/team] delete_member response status:", res.status);
+      console.log("[admin/team] delete_member response body:", bodyText);
       if (!res.ok) {
-        const data = await res.json() as { detail?: string };
+        const data = JSON.parse(bodyText) as { detail?: string };
         return fail(res.status, { action_error: data.detail ?? "Erro ao eliminar sócio." });
       }
       return { delete_success: true };
@@ -283,22 +323,26 @@ export const actions: Actions = {
   },
 
   // ── Eliminar cliente ───────────────────────────────────────────────────────
-  delete_client: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  delete_client: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/team/clients/${userId}`, {
-        method: "DELETE",
-        headers: { 
-          "x-csrf-token": csrfToken,
-          cookie: cookies.toString()
-        },
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/clients/${userId}`, {
+          method: "DELETE",
+          headers: {
+            "x-csrf-token": csrfToken,
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/team] delete_client response status:", res.status);
+      console.log("[admin/team] delete_client response body:", bodyText);
       if (!res.ok) {
-        const data = await res.json() as { detail?: string };
+        const data = JSON.parse(bodyText) as { detail?: string };
         return fail(res.status, { action_error: data.detail ?? "Erro ao eliminar cliente." });
       }
       return { delete_success: true };
@@ -309,22 +353,26 @@ export const actions: Actions = {
   },
 
   // ── Cancelar convite ────────────────────────────────────────────────────────
-  cancel_invite: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  cancel_invite: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const inviteId = form.get("invite_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/team/invitations/${inviteId}`, {
-        method: "DELETE",
-        headers: { 
-          "x-csrf-token": csrfToken,
-          cookie: cookies.toString()
-        },
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/invitations/${inviteId}`, {
+          method: "DELETE",
+          headers: {
+            "x-csrf-token": csrfToken,
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/team] cancel_invite response status:", res.status);
+      console.log("[admin/team] cancel_invite response body:", bodyText);
       if (!res.ok) {
-        const data = await res.json() as { detail?: string };
+        const data = JSON.parse(bodyText) as { detail?: string };
         return fail(res.status, { action_error: data.detail ?? "Erro ao cancelar convite." });
       }
       return { cancel_success: true };
@@ -335,22 +383,26 @@ export const actions: Actions = {
   },
 
   // ── Eliminar convite ────────────────────────────────────────────────────────
-  delete_invite: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  delete_invite: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const inviteId = form.get("invite_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/team/invitations/${inviteId}/force`, {
-        method: "DELETE",
-        headers: { 
-          "x-csrf-token": csrfToken,
-          cookie: cookies.toString()
-        },
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/invitations/${inviteId}/force`, {
+          method: "DELETE",
+          headers: {
+            "x-csrf-token": csrfToken,
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/team] delete_invite response status:", res.status);
+      console.log("[admin/team] delete_invite response body:", bodyText);
       if (!res.ok) {
-        const data = await res.json() as { detail?: string };
+        const data = JSON.parse(bodyText) as { detail?: string };
         return fail(res.status, { action_error: data.detail ?? "Erro ao eliminar convite." });
       }
       return { delete_success: true };
@@ -361,22 +413,26 @@ export const actions: Actions = {
   },
 
   // ── Reenviar convite ────────────────────────────────────────────────────────
-  resend_invite: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  resend_invite: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const inviteId = form.get("invite_id")?.toString() ?? "";
     const csrfToken = form.get("csrf_token")?.toString() ?? "";
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/team/invitations/${inviteId}/resend`, {
-        method: "POST",
-        headers: { 
-          "x-csrf-token": csrfToken,
-          cookie: cookies.toString()
-        },
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/invitations/${inviteId}/resend`, {
+          method: "POST",
+          headers: {
+            "x-csrf-token": csrfToken,
+            cookie: cookies.toString(),
+          },
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/team] resend_invite response status:", res.status);
+      console.log("[admin/team] resend_invite response body:", bodyText);
       if (!res.ok) {
-        const data = await res.json() as { detail?: string };
+        const data = JSON.parse(bodyText) as { detail?: string };
         return fail(res.status, { action_error: data.detail ?? "Erro ao reenviar convite." });
       }
       return { resend_success: true };
@@ -387,8 +443,7 @@ export const actions: Actions = {
   },
 
   // ── Actualizar permissões ───────────────────────────────────────────────────
-  update_permissions: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  update_permissions: async ({ request, platform, cookies }) => {
     const form = await request.formData();
     const userId = form.get("user_id")?.toString() ?? "";
     const permissionsJson = form.get("permissions")?.toString() ?? "{}";
@@ -402,17 +457,22 @@ export const actions: Actions = {
     }
 
     try {
-      const res = await fetch(`${apiBase}/api/admin/team/permissions/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-csrf-token": csrfToken,
-          cookie: cookies.toString()
-        },
-        body: JSON.stringify({ module_permissions: permissions }),
-      });
+      const res = await platform.env.API.fetch(
+        new Request(`https://internal/api/admin/team/permissions/${userId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-csrf-token": csrfToken,
+            cookie: cookies.toString(),
+          },
+          body: JSON.stringify({ module_permissions: permissions }),
+        }),
+      );
+      const bodyText = await res.text();
+      console.log("[admin/team] update_permissions response status:", res.status);
+      console.log("[admin/team] update_permissions response body:", bodyText);
       if (!res.ok) {
-        const data = await res.json() as { detail?: string };
+        const data = JSON.parse(bodyText) as { detail?: string };
         return fail(res.status, { permissions_error: data.detail ?? "Erro ao actualizar permissões." });
       }
       return { permissions_success: true };

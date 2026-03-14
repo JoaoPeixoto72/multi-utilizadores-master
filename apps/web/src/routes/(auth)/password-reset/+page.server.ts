@@ -5,22 +5,14 @@
  * R: STACK_LOCK.md §6 — resposta neutra (não revelar se email existe)
  */
 import { fail } from "@sveltejs/kit";
-import { env } from "$env/dynamic/public";
 import type { Actions, PageServerLoad } from "./$types";
-
-function getApiBase(): string {
-  const apiBase = env.PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!apiBase) throw new Error("PUBLIC_API_URL is not configured");
-  return apiBase;
-}
 
 export const load: PageServerLoad = async () => {
   return {};
 };
 
 export const actions: Actions = {
-  default: async ({ request, fetch, cookies }) => {
-    const apiBase = getApiBase();
+  default: async ({ request, platform, cookies }) => {
     const data = await request.formData();
     const email = data.get("email")?.toString() ?? "";
     const csrf = data.get("_csrf")?.toString() ?? "";
@@ -29,15 +21,20 @@ export const actions: Actions = {
       return fail(422, { error: "validation" });
     }
 
-    const res = await fetch(`${apiBase}/api/auth/password-reset/request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-csrf-token": csrf,
-        cookie: cookies.toString()
-      },
-      body: JSON.stringify({ email }),
-    });
+    const res = await platform.env.API.fetch(
+      new Request(`https://internal/api/auth/password-reset/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": csrf,
+          cookie: cookies.toString(),
+        },
+        body: JSON.stringify({ email }),
+      }),
+    );
+    const bodyText = await res.text();
+    console.log("[password-reset] response status:", res.status);
+    console.log("[password-reset] response body:", bodyText);
 
     if (res.status === 429) {
       return fail(429, { error: "rate_limited" });
