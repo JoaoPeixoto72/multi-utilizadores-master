@@ -381,21 +381,20 @@
         {@html feedback.type === "success" ? Icons.check : Icons.x}
       </span>
       {feedback.msg}
-      <Button
-        variant="ghost"
-        size="sm"
-        class="alert-close"
-        onclick={() => (feedback = { type: null, msg: "" })}
-        aria-label={m.common_close()}
-      >
-        <span aria-hidden="true">{@html Icons.x}</span>
-      </Button>
+      <button
+  type="button"
+  class="alert-close"
+  onclick={() => (feedback = { type: null, msg: "" })}
+  aria-label={m.common_close()}
+>
+  <span aria-hidden="true">{@html Icons.x}</span>
+</button>
     </Alert>
   {/if}
 
   <!-- ── Tabs de categoria ── -->
   <div class="tabs-wrapper">
-    <nav
+    <div
       class="tabs"
       role="tablist"
       aria-label={m.super_integration_categories_label()}
@@ -425,7 +424,7 @@
           {/if}
         </button>
       {/each}
-    </nav>
+    </div>
   </div>
 
   <!-- ── Grid de providers da categoria activa ── -->
@@ -445,7 +444,7 @@
           <span class="default-label">Provider predefinido:</span>
           <div class="default-options">
             {#each configuredInCat as integ}
-              <form
+    <form
                 method="POST"
                 action={integ.is_active === 1 ? "?/deactivate" : "?/activate"}
                 use:enhance={() =>
@@ -676,7 +675,7 @@
                       type="submit"
                       variant="danger"
                       disabled={loadingAction === def.provider}
-                      onclick={(e) => {
+              onclick={(e) => {
                         if (!confirm(`Remover ${def.label}?`))
                           e.preventDefault();
                       }}
@@ -792,7 +791,7 @@
     tabindex="-1"
   >
     <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div class="modal" onclick={(e) => e.stopPropagation()} role="document">
+    <div class="modal" role="presentation" onclick={(e) => e.stopPropagation()}>
       <div class="modal-header">
         <h3 class="modal-title">
           <span aria-hidden="true">{@html Icons.mail}</span>
@@ -863,7 +862,7 @@
               bind:value={verifyEmailVal}
               placeholder={m.team_invite_email_placeholder()}
               required
-              autofocus
+              
             />
           </div>
           <div class="modal-actions">
@@ -920,31 +919,10 @@
   }
 
   /* ── Alertas ── */
-  .alert {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    font-size: var(--text-sm);
-    border: 1px solid transparent;
-  }
   .alert-icon {
     display: flex;
     align-items: center;
     flex-shrink: 0;
-  }
-  .alert-icon svg {
-    width: 16px;
-    height: 16px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .alert-msg {
-    flex: 1;
   }
   .alert-close {
     display: flex;
@@ -959,32 +937,6 @@
     border-radius: var(--radius-sm);
     color: inherit;
     transition: opacity var(--duration-fast);
-  }
-  .alert-close:hover {
-    opacity: 1;
-  }
-  .alert-close svg {
-    width: 14px;
-    height: 14px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .alert-success {
-    background-color: var(--badge-success-bg);
-    color: var(--badge-success-text);
-    border-color: color-mix(
-      in srgb,
-      var(--badge-success-text) 20%,
-      transparent
-    );
-  }
-  .alert-info {
-    background-color: var(--badge-info-bg);
-    color: var(--badge-info-text);
-    border-color: color-mix(in srgb, var(--badge-info-text) 20%, transparent);
   }
 
   /* ── Tabs (underline style) ── */
@@ -1245,16 +1197,6 @@
     color: var(--badge-success-text);
   }
 
-  .tested-tag svg {
-    width: 11px;
-    height: 11px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
   .untested-tag {
     font-size: var(--text-xs);
     color: #ca8a04;
@@ -1269,67 +1211,7 @@
     flex-wrap: wrap;
   }
 
-  /* ── Botões de acção ── */
-  .action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-full);
-    border: 1px solid var(--border-subtle);
-    background: none;
-    color: var(--text-secondary);
-    font-size: var(--text-xs);
-    font-weight: var(--weight-medium);
-    cursor: pointer;
-    transition: all var(--duration-fast);
-    white-space: nowrap;
-  }
 
-  .action-btn:hover {
-    background-color: var(--bg-hover);
-    color: var(--text-primary);
-  }
-  .action-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-
-  .action-btn svg {
-    width: 12px;
-    height: 12px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    flex-shrink: 0;
-  }
-
-  .action-btn-positive {
-    color: var(--badge-success-text);
-    border-color: var(--badge-success-bg);
-  }
-  .action-btn-positive:hover {
-    background: var(--badge-success-bg);
-  }
-
-  .action-btn-warn {
-    color: var(--badge-warning-text);
-    border-color: var(--badge-warning-bg);
-  }
-  .action-btn-warn:hover {
-    background: var(--badge-warning-bg);
-  }
-
-  .action-btn-danger {
-    color: var(--badge-error-text);
-    border-color: var(--badge-error-bg);
-  }
-  .action-btn-danger:hover {
-    background: var(--badge-error-bg);
-  }
 
   /* ── Formulário inline (não configurado) ── */
   form {
@@ -1369,32 +1251,7 @@
     box-shadow: 0 0 0 3px var(--brand-100);
   }
 
-  .save-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
-    padding: 0 var(--space-5);
-    height: var(--size-input-h);
-    border-radius: var(--radius-full);
-    background-color: var(--text-primary);
-    color: var(--bg-surface);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-semibold);
-    border: none;
-    cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
-    transition: opacity var(--duration-fast);
-  }
 
-  .save-btn:hover:not(:disabled) {
-    opacity: 0.88;
-  }
-  .save-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
 
   .fields-hints {
     display: flex;
@@ -1422,16 +1279,6 @@
   .docs-link:hover {
     color: var(--brand-700);
     text-decoration: underline;
-  }
-
-  .docs-link svg {
-    width: 11px;
-    height: 11px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
 
   /* ── Spinner ── */
@@ -1488,17 +1335,6 @@
     margin: 0;
   }
 
-  .modal-title svg {
-    width: 18px;
-    height: 18px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 1.75;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    flex-shrink: 0;
-  }
-
   .modal-close {
     display: flex;
     align-items: center;
@@ -1514,15 +1350,6 @@
   }
   .modal-close:hover {
     background: var(--bg-hover);
-  }
-  .modal-close svg {
-    width: 16px;
-    height: 16px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
 
   .modal-body {
@@ -1577,44 +1404,7 @@
     gap: var(--space-3);
   }
 
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--pad-btn-y) var(--pad-btn-x);
-    border-radius: var(--radius-full);
-    background-color: var(--text-primary);
-    color: var(--bg-surface);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-semibold);
-    border: none;
-    cursor: pointer;
-    transition: opacity var(--duration-fast);
-  }
-  .btn-primary:hover:not(:disabled) {
-    opacity: 0.88;
-  }
-  .btn-primary:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
 
-  .btn-outline {
-    display: inline-flex;
-    align-items: center;
-    padding: var(--space-2) var(--pad-btn-x);
-    border-radius: var(--radius-full);
-    border: 1px solid var(--border-subtle);
-    background: none;
-    color: var(--text-primary);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    cursor: pointer;
-    transition: background var(--duration-fast);
-  }
-  .btn-outline:hover {
-    background: var(--bg-hover);
-  }
 
   /* ── Responsive ── */
   @media (max-width: 640px) {

@@ -27,13 +27,11 @@
   }
   let { data, form }: Props = $props();
 
-  // Tab activa — sincroniza com URL (derivada da prop, sem $effect)
-  let activeTab = $state<string>(data.activeTab ?? "collaborators");
+  // Tab activa — sincroniza com URL (derivada da prop, sem $:)
+  let activeTab = $state<string>("collaborators");
   // Re-sync when server data changes (e.g., navigation)
-  $effect.pre(() => {
-    if (data.activeTab && data.activeTab !== activeTab) {
-      activeTab = data.activeTab;
-    }
+  $effect(() => {
+    activeTab = data.activeTab ?? "collaborators";
   });
 
   function setTab(tab: string) {
@@ -975,9 +973,7 @@
     color: var(--text-secondary);
   }
 
-  .td-actions {
-    /* Retirar display: flex do TD directo para evitar o bug do quadrado branco nas linhas vazias */
-  }
+  
 
   .actions-group {
     display: flex;

@@ -22,44 +22,48 @@
   let activeTab = $state<"branding" | "design" | "system" | "env">("branding");
   let isSaving = $state(false);
 
-  // Valores iniciais do formulário (preenchidos com appConfig ou defaults do sistema)
-  const initialConfig = data.appConfig || {};
-  const currentPalette = (initialConfig.ui_theme_palette ||
-    data.palette ||
-    "indigo") as Palette;
-  const brandColor = themeStore.PALETTE_COLORS[currentPalette] || "#4f46e5";
+  // Build static initial object directly from data in a single expression
+  let config = $state((() => {
+    const appConfig = data.appConfig || {};
+    const palette = (appConfig.ui_theme_palette || data.palette || "indigo") as Palette;
+    const brandColor = themeStore.PALETTE_COLORS[palette] || "#4f46e5";
+    
+    return {
+      ui_theme_palette: palette,
+      ui_theme_secondary: appConfig.ui_theme_secondary || "slate",
+      ui_color_primary: appConfig.ui_color_primary || brandColor,
+      ui_color_secondary: appConfig.ui_color_secondary || "#64748b",
+      ui_color_background: appConfig.ui_color_background || "#f8fafc",
+      ui_color_surface: appConfig.ui_color_surface || "#ffffff",
+      ui_color_action_btn: appConfig.ui_color_action_btn || brandColor,
+      ui_color_action_text: appConfig.ui_color_action_text || "#ffffff",
+      ui_color_warning: appConfig.ui_color_warning || "#f59e0b",
+      ui_color_danger: appConfig.ui_color_danger || "#dc2626",
+      ui_color_link: appConfig.ui_color_link || brandColor,
+      ui_border_radius: appConfig.ui_border_radius || "lg",
+      ui_font_family: appConfig.ui_font_family || "inter",
+      ui_input_border_active: appConfig.ui_input_border_active ?? "true",
+      ui_input_border_color: appConfig.ui_input_border_color ?? "",
+      ui_input_bg_color: appConfig.ui_input_bg_color ?? "",
+      ui_input_padding: appConfig.ui_input_padding ?? "12px",
 
-  let config = $state({
-    ui_theme_palette: currentPalette,
-    ui_theme_secondary: initialConfig.ui_theme_secondary || "slate",
-    ui_color_primary: initialConfig.ui_color_primary || brandColor,
-    ui_color_secondary: initialConfig.ui_color_secondary || "#64748b",
-    ui_color_background: initialConfig.ui_color_background || "#f8fafc",
-    ui_color_surface: initialConfig.ui_color_surface || "#ffffff",
-    ui_color_action_btn: initialConfig.ui_color_action_btn || brandColor,
-    ui_color_action_text: initialConfig.ui_color_action_text || "#ffffff",
-    ui_color_warning: initialConfig.ui_color_warning || "#f59e0b",
-    ui_color_danger: initialConfig.ui_color_danger || "#dc2626",
-    ui_color_link: initialConfig.ui_color_link || brandColor,
-    ui_border_radius: initialConfig.ui_border_radius || "lg",
-    ui_font_family: initialConfig.ui_font_family || "inter",
-    ui_input_border_active: initialConfig.ui_input_border_active ?? "true",
-    ui_input_border_color: initialConfig.ui_input_border_color ?? "",
-    ui_input_bg_color: initialConfig.ui_input_bg_color ?? "",
-    ui_input_padding: initialConfig.ui_input_padding ?? "12px",
+      ui_button_radius: appConfig.ui_button_radius ?? "full",
+      ui_button_bg_color: appConfig.ui_button_bg_color ?? "",
+      ui_button_text_color: appConfig.ui_button_text_color ?? "",
 
-    ui_button_radius: initialConfig.ui_button_radius ?? "full",
-    ui_button_bg_color: initialConfig.ui_button_bg_color ?? "",
-    ui_button_text_color: initialConfig.ui_button_text_color ?? "",
+      sys_invite_ttl_seconds: appConfig.sys_invite_ttl_seconds || "86400",
+      sys_temp_owner_ttl_seconds:
+        appConfig.sys_temp_owner_ttl_seconds || "86400",
+      sys_email_reset_ttl_seconds:
+        appConfig.sys_email_reset_ttl_seconds || "3600",
+      sys_image_max_kb: appConfig.sys_image_max_kb || "200",
+      sys_image_max_px: appConfig.sys_image_max_px || "512",
+    };
+  })());
 
-    sys_invite_ttl_seconds: initialConfig.sys_invite_ttl_seconds || "86400",
-    sys_temp_owner_ttl_seconds:
-      initialConfig.sys_temp_owner_ttl_seconds || "86400",
-    sys_email_reset_ttl_seconds:
-      initialConfig.sys_email_reset_ttl_seconds || "3600",
-    sys_image_max_kb: initialConfig.sys_image_max_kb || "200",
-    sys_image_max_px: initialConfig.sys_image_max_px || "512",
-  });
+
+
+
 
   const colorCategories = [
     {
@@ -492,6 +496,7 @@
                 Define a fonte primária utilizada na plataforma.
               </p>
               <select
+                id="ui_font_family"
                 class="select-field"
                 name="ui_font_family"
                 bind:value={config.ui_font_family}
@@ -514,6 +519,7 @@
                 simulando um estilo "flat".
               </p>
               <select
+                id="ui_input_border_active"
                 class="select-field"
                 name="ui_input_border_active"
                 bind:value={config.ui_input_border_active}
@@ -578,19 +584,22 @@
         <section class="section">
           <h2 class="section-title">Botões</h2>
           <div class="card p-6 flex flex-col gap-8">
-            <div class="field-group">
-              <label class="field-label">Arredondamento Padrão de Botões</label>
+  <div class="field-group">
+    <label class="field-label" for="ui_button_radius_first">
+      Arredondamento Padrão de Botões
+    </label>
               <p class="field-hint">
                 O nível de border-radius aplicado globalmente aos botões de
                 ação.
               </p>
               <div class="radius-grid">
-                {#each radii as r}
+              {#each radii as r, idx}
                   <label
                     class="radius-option"
                     class:active={config.ui_button_radius === r.id}
                   >
                     <input
+                      id={idx === 0 ? 'ui_button_radius_first' : undefined}
                       type="radio"
                       name="ui_button_radius"
                       value={r.id}

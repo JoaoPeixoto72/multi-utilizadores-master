@@ -1,51 +1,52 @@
 <script lang="ts">
-  /**
-   * ThemeSwitcher.svelte — Selector de paleta / tema / layout (M11)
-   *
-   * Exibe um dropdown compacto para trocar:
-   *   - Tema (light/dark)
-   *   - Paleta de cores (6 opções)
-   *   - Layout (3 opções)
-   *
-   * SVG icons only — zero emojis.
-   * Usa themeStore — mudanças são imediatas, persistidas em cookies.
-   */
-  import { themeStore } from "$lib/stores/theme.svelte.js";
-  import { Icons } from "$lib/icons.js";
-  import * as m from "$lib/paraglide/messages.js";
+/**
+ * ThemeSwitcher.svelte — Selector de paleta / tema / layout (M11)
+ *
+ * Exibe um dropdown compacto para trocar:
+ *   - Tema (light/dark)
+ *   - Paleta de cores (6 opções)
+ *   - Layout (3 opções)
+ *
+ * SVG icons only — zero emojis.
+ * Usa themeStore — mudanças são imediatas, persistidas em cookies.
+ */
 
-  interface Props {
-    modeOnly?: boolean;
-    toggleOnly?: boolean;
+import { Icons } from "$lib/icons.js";
+import * as m from "$lib/paraglide/messages.js";
+import { themeStore } from "$lib/stores/theme.svelte.js";
+
+interface Props {
+  modeOnly?: boolean;
+  toggleOnly?: boolean;
+}
+
+let { modeOnly = false, toggleOnly = false }: Props = $props();
+
+let open = $state(false);
+
+function toggle() {
+  open = !open;
+}
+function close() {
+  open = false;
+}
+
+function handleClick(e: MouseEvent) {
+  if (e) e.stopPropagation();
+  if (toggleOnly) {
+    themeStore.setTheme(themeStore.theme === "light" ? "dark" : "light");
+  } else {
+    toggle();
   }
+}
 
-  let { modeOnly = false, toggleOnly = false }: Props = $props();
-
-  let open = $state(false);
-
-  function toggle() {
-    open = !open;
+// Fechar ao clicar fora
+function handleOutsideClick(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest(".theme-switcher")) {
+    close();
   }
-  function close() {
-    open = false;
-  }
-
-  function handleClick(e: MouseEvent) {
-    if (e) e.stopPropagation();
-    if (toggleOnly) {
-      themeStore.setTheme(themeStore.theme === "light" ? "dark" : "light");
-    } else {
-      toggle();
-    }
-  }
-
-  // Fechar ao clicar fora
-  function handleOutsideClick(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    if (!target.closest(".theme-switcher")) {
-      close();
-    }
-  }
+}
 </script>
 
 <svelte:window onclick={handleOutsideClick} />
@@ -69,14 +70,15 @@
   </button>
 
   {#if open}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="switcher-panel"
-      role="dialog"
-      aria-label={m.theme_section_theme()}
-      onclick={(e) => e.stopPropagation()}
-      onkeydown={(e) => e.stopPropagation()}
-    >
+     <!-- svelte-ignore a11y_no_static_element_interactions -->
+     <div
+       class="switcher-panel"
+       tabindex="-1"
+       role="dialog"
+       aria-label={m.theme_section_theme()}
+       onclick={(e) => e.stopPropagation()}
+       onkeydown={(e) => e.stopPropagation()}
+     >
       <!-- Tema -->
       <div class="section">
         <span class="section-label">{m.theme_section_theme()}</span>

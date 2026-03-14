@@ -6,197 +6,185 @@
     csrfToken: string — token CSRF para mutações
 -->
 <script lang="ts">
-  import { Icons } from "$lib/icons.js";
-  import { invalidateAll } from "$app/navigation";
-  import { formatDate } from "$lib/format.js";
-  import * as m from "$lib/paraglide/messages.js";
+import { invalidateAll } from "$app/navigation";
+import { formatDate } from "$lib/format.js";
+import { Icons } from "$lib/icons.js";
+import * as m from "$lib/paraglide/messages.js";
 
-  interface Notification {
-    id: string;
-    type: string;
-    title_key: string;
-    body_key: string;
-    params: string | null;
-    link: string | null;
-    is_read: number;
-    created_at: string;
+interface Notification {
+  id: string;
+  type: string;
+  title_key: string;
+  body_key: string;
+  params: string | null;
+  link: string | null;
+  is_read: number;
+  created_at: string;
+}
+
+let { count = 0, csrfToken = "" }: { count: number; csrfToken: string } = $props();
+
+let open = $state(false);
+let loading = $state(false);
+let localNotifications = $state<Notification[]>([]);
+let fetched = $state(false);
+let localCount = $state(0);
+
+$effect(() => {
+  localCount = count;
+});
+
+/** Headers comuns para mutações (inclui CSRF) */
+function mutHeaders(): HeadersInit {
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (csrfToken) h["x-csrf-token"] = csrfToken;
+  return h;
+}
+
+function toggle(e: MouseEvent) {
+  if (e) e.stopPropagation();
+  if (open) {
+    open = false;
+    return;
   }
+  open = true;
+  fetchNotifications();
+}
 
-  let { count = 0, csrfToken = "" }: { count: number; csrfToken: string } =
-    $props();
+async function fetchNotifications() {
+  loading = true;
+  fetched = false;
+  try {
+    const res = await fetch("/api/user/notifications?limit=20");
+    if (res.ok) {
+      const data = (await res.json()) as { notifications?: Notification[] };
+      localNotifications = data.notifications ?? [];
+    } else {
+      localNotifications = [];
+    }
+  } catch {
+    localNotifications = [];
+  }
+  fetched = true;
+  loading = false;
+  localCount = localNotifications.filter((n) => n.is_read === 0).length;
+}
 
-  let open = $state(false);
-  let loading = $state(false);
-  let localNotifications = $state<Notification[]>([]);
-  let fetched = $state(false);
-  let localCount = $state(count);
-
-  $effect(() => {
-    localCount = count;
+async function markRead(id: string) {
+  const res = await fetch(`/api/user/notifications/${id}/read`, {
+    method: "PATCH",
+    headers: mutHeaders(),
   });
-
-  /** Headers comuns para mutações (inclui CSRF) */
-  function mutHeaders(): HeadersInit {
-    const h: Record<string, string> = { "Content-Type": "application/json" };
-    if (csrfToken) h["x-csrf-token"] = csrfToken;
-    return h;
-  }
-
-  function toggle(e: MouseEvent) {
-    if (e) e.stopPropagation();
-    if (open) {
-      open = false;
-      return;
-    }
-    open = true;
-    fetchNotifications();
-  }
-
-  async function fetchNotifications() {
-    loading = true;
-    fetched = false;
-    try {
-      const res = await fetch("/api/user/notifications?limit=20");
-      if (res.ok) {
-        const data = (await res.json()) as { notifications?: Notification[] };
-        localNotifications = data.notifications ?? [];
-      } else {
-        localNotifications = [];
-      }
-    } catch {
-      localNotifications = [];
-    }
-    fetched = true;
-    loading = false;
+  if (res.ok) {
+    localNotifications = localNotifications.map((n) => (n.id === id ? { ...n, is_read: 1 } : n));
     localCount = localNotifications.filter((n) => n.is_read === 0).length;
+    await invalidateAll();
   }
+}
 
-  async function markRead(id: string) {
-    const res = await fetch(`/api/user/notifications/${id}/read`, {
-      method: "PATCH",
-      headers: mutHeaders(),
-    });
-    if (res.ok) {
-      localNotifications = localNotifications.map((n) =>
-        n.id === id ? { ...n, is_read: 1 } : n,
-      );
-      localCount = localNotifications.filter((n) => n.is_read === 0).length;
-      await invalidateAll();
-    }
+async function markAllRead() {
+  loading = true;
+  const res = await fetch("/api/user/notifications/read-all", {
+    method: "POST",
+    headers: mutHeaders(),
+  });
+  if (res.ok) {
+    localNotifications = localNotifications.map((n) => ({
+      ...n,
+      is_read: 1,
+    }));
+    localCount = 0;
+    await invalidateAll();
   }
+  loading = false;
+}
 
-  async function markAllRead() {
-    loading = true;
-    const res = await fetch("/api/user/notifications/read-all", {
-      method: "POST",
-      headers: mutHeaders(),
-    });
-    if (res.ok) {
-      localNotifications = localNotifications.map((n) => ({
-        ...n,
-        is_read: 1,
-      }));
-      localCount = 0;
-      await invalidateAll();
-    }
-    loading = false;
+async function deleteNotification(id: string) {
+  const res = await fetch(`/api/user/notifications/${id}`, {
+    method: "DELETE",
+    headers: mutHeaders(),
+  });
+  if (res.ok) {
+    localNotifications = localNotifications.filter((n) => n.id !== id);
+    localCount = localNotifications.filter((n) => n.is_read === 0).length;
+    await invalidateAll();
   }
+}
 
-  async function deleteNotification(id: string) {
-    const res = await fetch(`/api/user/notifications/${id}`, {
-      method: "DELETE",
-      headers: mutHeaders(),
-    });
-    if (res.ok) {
-      localNotifications = localNotifications.filter((n) => n.id !== id);
-      localCount = localNotifications.filter((n) => n.is_read === 0).length;
-      await invalidateAll();
-    }
+async function deleteAll() {
+  loading = true;
+  const res = await fetch("/api/user/notifications", {
+    method: "DELETE",
+    headers: mutHeaders(),
+  });
+  if (res.ok) {
+    localNotifications = [];
+    localCount = 0;
+    await invalidateAll();
   }
+  loading = false;
+}
 
-  async function deleteAll() {
-    loading = true;
-    const res = await fetch("/api/user/notifications", {
-      method: "DELETE",
-      headers: mutHeaders(),
-    });
-    if (res.ok) {
-      localNotifications = [];
-      localCount = 0;
-      await invalidateAll();
-    }
-    loading = false;
+/**
+ * Mapa de body_key (armazenado na DB) → chave i18n humanizada.
+ * Se o body_key existir aqui, o template i18n é usado; caso contrário, fallback simples.
+ */
+const BODY_KEY_MAP: Record<string, (params: Record<string, string | number>) => string> = {
+  notif_tenant_activated_body: (p) => m.notif_body_tenant_activated(p as any),
+  notif_elevation_granted_body: (p) => m.notif_body_elevation_granted(p as any),
+  notif_elevation_revoked_body: (p) => m.notif_body_elevation_revoked(p as any),
+  notif_invite_accepted_body: (p) => m.notif_body_invite_accepted(p as any),
+  notif_body_invite_accepted: (p) => m.notif_body_invite_accepted(p as any),
+  notif_body_invite_sent: (p) => m.notif_body_invite_sent(p as any),
+  notif_body_invite_cancelled: (p) => m.notif_body_invite_cancelled(p as any),
+  notif_body_user_deactivated: (p) => m.notif_body_user_deactivated(p as any),
+  notif_body_user_deleted: (p) => m.notif_body_user_deleted(p as any),
+  "notification.backup_done.body": (p) => m.notif_body_backup_done(p as any),
+  "notification.break_glass.body": (p) => m.notif_body_break_glass(p as any),
+};
+
+const TITLE_KEY_MAP: Record<string, () => string> = {
+  notif_tenant_activated_title: () => m.notif_title_tenant_activated(),
+  notif_elevation_granted_title: () => m.notif_title_elevation_granted(),
+  notif_elevation_revoked_title: () => m.notif_title_elevation_revoked(),
+  notif_invite_accepted_title: () => m.notif_title_invite_accepted(),
+  notif_title_invite_accepted: () => m.notif_title_invite_accepted(),
+  notif_title_invite_sent: () => m.notif_title_invite_sent(),
+  notif_title_invite_cancelled: () => m.notif_title_invite_cancelled(),
+  notif_title_user_deactivated: () => m.notif_title_user_deactivated(),
+  notif_title_user_deleted: () => m.notif_title_user_deleted(),
+  "notification.backup_done.title": () => m.notif_title_backup_done(),
+  "notification.break_glass.title": () => m.notif_title_break_glass(),
+};
+
+function buildBody(bodyKey: string, paramsRaw: string | null): string {
+  try {
+    const params = paramsRaw ? JSON.parse(paramsRaw) : {};
+    const fn = BODY_KEY_MAP[bodyKey];
+    if (fn) return fn(params);
+    // Fallback: substituição simples de {param}
+    return bodyKey.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`));
+  } catch {
+    return bodyKey;
   }
+}
 
-  /**
-   * Mapa de body_key (armazenado na DB) → chave i18n humanizada.
-   * Se o body_key existir aqui, o template i18n é usado; caso contrário, fallback simples.
-   */
-  const BODY_KEY_MAP: Record<
-    string,
-    (params: Record<string, string | number>) => string
-  > = {
-    notif_tenant_activated_body: (p) => m.notif_body_tenant_activated(p as any),
-    notif_elevation_granted_body: (p) =>
-      m.notif_body_elevation_granted(p as any),
-    notif_elevation_revoked_body: (p) =>
-      m.notif_body_elevation_revoked(p as any),
-    notif_invite_accepted_body: (p) => m.notif_body_invite_accepted(p as any),
-    notif_body_invite_accepted: (p) => m.notif_body_invite_accepted(p as any),
-    notif_body_invite_sent: (p) => m.notif_body_invite_sent(p as any),
-    notif_body_invite_cancelled: (p) => m.notif_body_invite_cancelled(p as any),
-    notif_body_user_deactivated: (p) => m.notif_body_user_deactivated(p as any),
-    notif_body_user_deleted: (p) => m.notif_body_user_deleted(p as any),
-    "notification.backup_done.body": (p) => m.notif_body_backup_done(p as any),
-    "notification.break_glass.body": (p) => m.notif_body_break_glass(p as any),
-  };
+function buildTitle(titleKey: string): string {
+  const fn = TITLE_KEY_MAP[titleKey];
+  if (fn) return fn();
+  return titleKey;
+}
 
-  const TITLE_KEY_MAP: Record<string, () => string> = {
-    notif_tenant_activated_title: () => m.notif_title_tenant_activated(),
-    notif_elevation_granted_title: () => m.notif_title_elevation_granted(),
-    notif_elevation_revoked_title: () => m.notif_title_elevation_revoked(),
-    notif_invite_accepted_title: () => m.notif_title_invite_accepted(),
-    notif_title_invite_accepted: () => m.notif_title_invite_accepted(),
-    notif_title_invite_sent: () => m.notif_title_invite_sent(),
-    notif_title_invite_cancelled: () => m.notif_title_invite_cancelled(),
-    notif_title_user_deactivated: () => m.notif_title_user_deactivated(),
-    notif_title_user_deleted: () => m.notif_title_user_deleted(),
-    "notification.backup_done.title": () => m.notif_title_backup_done(),
-    "notification.break_glass.title": () => m.notif_title_break_glass(),
-  };
-
-  function buildBody(bodyKey: string, paramsRaw: string | null): string {
-    try {
-      const params = paramsRaw ? JSON.parse(paramsRaw) : {};
-      const fn = BODY_KEY_MAP[bodyKey];
-      if (fn) return fn(params);
-      // Fallback: substituição simples de {param}
-      return bodyKey.replace(/\{(\w+)\}/g, (_, k) =>
-        String(params[k] ?? `{${k}}`),
-      );
-    } catch {
-      return bodyKey;
-    }
+// Fechar ao clicar fora
+function handleOutside(e: MouseEvent) {
+  if (!open) return;
+  const target = e.target as HTMLElement;
+  if (!target.closest(".notif-bell-wrap")) {
+    open = false;
   }
+}
 
-  function buildTitle(titleKey: string): string {
-    const fn = TITLE_KEY_MAP[titleKey];
-    if (fn) return fn();
-    return titleKey;
-  }
-
-  // Fechar ao clicar fora
-  function handleOutside(e: MouseEvent) {
-    if (!open) return;
-    const target = e.target as HTMLElement;
-    if (!target.closest(".notif-bell-wrap")) {
-      open = false;
-    }
-  }
-
-  const unread = $derived(
-    localNotifications.filter((n) => n.is_read === 0).length,
-  );
+const unread = $derived(localNotifications.filter((n) => n.is_read === 0).length);
 </script>
 
 <svelte:window onclick={handleOutside} />
@@ -218,14 +206,15 @@
   </button>
 
   {#if open}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="notif-popup"
-      role="dialog"
-      aria-label={m.notif_title()}
-      onclick={(e) => e.stopPropagation()}
-      onkeydown={(e) => e.stopPropagation()}
-    >
+     <!-- svelte-ignore a11y_no_static_element_interactions -->
+     <div
+       class="notif-popup"
+       tabindex="-1"
+       role="dialog"
+       aria-label={m.notif_title()}
+       onclick={(e) => e.stopPropagation()}
+       onkeydown={(e) => e.stopPropagation()}
+     >
       <!-- Cabeçalho popup -->
       <div class="popup-header">
         <span class="popup-title">{m.notif_title()}</span>

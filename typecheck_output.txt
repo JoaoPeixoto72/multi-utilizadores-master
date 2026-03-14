@@ -1,0 +1,243 @@
+
+> cf-base@0.1.0 typecheck C:\projectos\archflow-refactor
+> turbo run typecheck
+
+• Packages in scope: api, shared, web
+• Running typecheck in 3 packages
+• Remote caching disabled
+api:typecheck: cache hit, replaying logs c0b1d7e9a158e104
+api:typecheck: 
+api:typecheck: > api@0.1.0 typecheck C:\projectos\archflow-refactor\apps\api
+api:typecheck: > tsc --noEmit
+api:typecheck: 
+web:typecheck: cache hit, replaying logs db55833ac4fbf551
+web:typecheck: 
+web:typecheck: > web@0.1.0 typecheck C:\projectos\archflow-refactor\apps\web
+web:typecheck: > svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+web:typecheck: 
+web:typecheck: Loading svelte-check in workspace: c:\projectos\archflow-refactor\apps\web
+web:typecheck: Getting Svelte diagnostics...
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:923:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".alert"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+shared:typecheck: cache hit, replaying logs 4af739bb6ef983a6
+web:typecheck: [36m  /* ── Alertas ── */
+web:typecheck:   [35m.alert[36m {
+web:typecheck:     display: flex;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:937:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".alert-icon svg"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.alert-icon svg[36m {
+web:typecheck:     width: 16px;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:946:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".alert-msg"
+shared:typecheck: 
+shared:typecheck: > shared@0.1.0 typecheck C:\projectos\archflow-refactor\packages\shared
+shared:typecheck: > tsc --noEmit
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.alert-msg[36m {
+shared:typecheck: 
+web:typecheck:     flex: 1;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:949:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".alert-close"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.alert-close[36m {
+web:typecheck:     display: flex;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:963:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".alert-close:hover"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.alert-close:hover[36m {
+web:typecheck:     opacity: 1;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:966:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".alert-close svg"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.alert-close svg[36m {
+web:typecheck:     width: 14px;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:975:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".alert-success"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.alert-success[36m {
+web:typecheck:     background-color: var(--badge-success-bg);[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:984:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".alert-info"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.alert-info[36m {
+web:typecheck:     background-color: var(--badge-info-bg);[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1248:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".tested-tag svg"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.tested-tag svg[36m {
+web:typecheck:     width: 11px;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1273:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".action-btn"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  /* ── Botões de acção ── */
+web:typecheck:   [35m.action-btn[36m {
+web:typecheck:     display: inline-flex;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1289:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".action-btn:hover"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.action-btn:hover[36m {
+web:typecheck:     background-color: var(--bg-hover);[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1293:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".action-btn:disabled"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.action-btn:disabled[36m {
+web:typecheck:     opacity: 0.4;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1299:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".action-btn svg"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.action-btn svg[36m {
+web:typecheck:     width: 12px;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1310:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".action-btn-positive"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.action-btn-positive[36m {
+web:typecheck:     color: var(--badge-success-text);[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1314:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".action-btn-positive:hover"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.action-btn-positive:hover[36m {
+web:typecheck:     background: var(--badge-success-bg);[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1318:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".action-btn-warn"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.action-btn-warn[36m {
+web:typecheck:     color: var(--badge-warning-text);[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1322:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".action-btn-warn:hover"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.action-btn-warn:hover[36m {
+web:typecheck:     background: var(--badge-warning-bg);[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1326:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".action-btn-danger"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.action-btn-danger[36m {
+web:typecheck:     color: var(--badge-error-text);[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1330:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".action-btn-danger:hover"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.action-btn-danger:hover[36m {
+web:typecheck:     background: var(--badge-error-bg);[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1372:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".save-btn"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.save-btn[36m {
+web:typecheck:     display: inline-flex;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1391:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".save-btn:hover:not(:disabled)"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.save-btn:hover:not(:disabled)[36m {
+web:typecheck:     opacity: 0.88;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1394:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".save-btn:disabled"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.save-btn:disabled[36m {
+web:typecheck:     opacity: 0.4;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1427:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".docs-link svg"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.docs-link svg[36m {
+web:typecheck:     width: 11px;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1491:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".modal-title svg"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.modal-title svg[36m {
+web:typecheck:     width: 18px;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1518:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".modal-close svg"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.modal-close svg[36m {
+web:typecheck:     width: 16px;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1580:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".btn-primary"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.btn-primary[36m {
+web:typecheck:     display: inline-flex;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1594:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".btn-primary:hover:not(:disabled)"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.btn-primary:hover:not(:disabled)[36m {
+web:typecheck:     opacity: 0.88;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1597:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".btn-primary:disabled"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.btn-primary:disabled[36m {
+web:typecheck:     opacity: 0.4;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1602:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".btn-outline"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m
+web:typecheck:   [35m.btn-outline[36m {
+web:typecheck:     display: inline-flex;[39m
+web:typecheck: 
+web:typecheck: c:\projectos\archflow-refactor\apps\web\[32msrc\routes\(super)\super\integrations\+page.svelte[39m:1615:3
+web:typecheck: [33mWarn[39m: Unused CSS selector ".btn-outline:hover"
+web:typecheck: https://svelte.dev/e/css_unused_selector (svelte)
+web:typecheck: [36m  }
+web:typecheck:   [35m.btn-outline:hover[36m {
+web:typecheck:     background: var(--bg-hover);[39m
+web:typecheck: 
+web:typecheck: ====================================
+web:typecheck: [33msvelte-check found 0 errors and 30 warnings in 1 file
+web:typecheck: [39m
+
+ Tasks:    3 successful, 3 total
+Cached:    3 cached, 3 total
+  Time:    63ms >>> FULL TURBO
+

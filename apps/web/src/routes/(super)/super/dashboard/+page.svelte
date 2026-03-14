@@ -287,32 +287,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* ── Badge ── */
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px var(--space-2);
-    border-radius: var(--radius-full);
-    font-size: var(--text-xs);
-    font-weight: var(--weight-medium);
-  }
-
-  .badge-active {
-    background-color: var(--badge-success-bg);
-    color: var(--badge-success-text);
-  }
-  .badge-inactive {
-    background-color: var(--badge-warning-bg);
-    color: var(--badge-warning-text);
-  }
-  .badge-pending {
-    background-color: var(--badge-info-bg);
-    color: var(--badge-info-text);
-  }
-  .badge-deleted {
-    background-color: var(--badge-error-bg);
-    color: var(--badge-error-text);
-  }
+  /* Badge styles removed: rely on shared design system */
 
   /* ── Empty ── */
   .empty {
