@@ -47,9 +47,18 @@ function handleOutsideClick(event: MouseEvent) {
     close();
   }
 }
+
+// Fechar com Escape
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key === "Escape" && open) {
+    close();
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}
 </script>
 
-<svelte:window onclick={handleOutsideClick} />
+<svelte:window onclick={handleOutsideClick} onkeydown={handleKeydown} />
 
 <div class="theme-switcher">
   <button
@@ -70,15 +79,16 @@ function handleOutsideClick(event: MouseEvent) {
   </button>
 
   {#if open}
-     <!-- svelte-ignore a11y_no_static_element_interactions -->
-     <div
-       class="switcher-panel"
-       tabindex="-1"
-       role="dialog"
-       aria-label={m.theme_section_theme()}
-       onclick={(e) => e.stopPropagation()}
-       onkeydown={(e) => e.stopPropagation()}
-     >
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="switcher-panel"
+        tabindex="-1"
+        role="dialog"
+        aria-modal="true"
+        aria-label={m.theme_section_theme()}
+        onclick={(e) => e.stopPropagation()}
+        onkeydown={(e) => e.stopPropagation()}
+      >
       <!-- Tema -->
       <div class="section">
         <span class="section-label">{m.theme_section_theme()}</span>

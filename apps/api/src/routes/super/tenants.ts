@@ -10,23 +10,30 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { getStorageUsage } from "../../db/queries/storage.js";
 import { getAllAppConfig, setManyAppConfig } from "../../db/queries/app-config.js";
 import { deleteAllUserSessions } from "../../db/queries/sessions.js";
+import { getStorageUsage } from "../../db/queries/storage.js";
 import {
   countTenantsByStatus,
   getTenantById,
   listTenants,
+  softDeleteTenant,
   updateTenantLimits,
 } from "../../db/queries/tenants.js";
-import { countUsersByTenant, getTenantOwner, listMembersByTenant, listCollaboratorsByTenant, listClientsByTenant } from "../../db/queries/users.js";
+import {
+  countUsersByTenant,
+  getTenantOwner,
+  listClientsByTenant,
+  listCollaboratorsByTenant,
+  listMembersByTenant,
+} from "../../db/queries/users.js";
 import { inviteOwnerTemplate } from "../../lib/integrations/email/templates/index.js";
 import { createLogger, getTraceId } from "../../lib/logger.js";
 import { problemResponse } from "../../lib/problem.js";
 import { authMiddleware, requireSuperUser } from "../../middleware/auth.js";
+import { logAuditEvent } from "../../services/audit-log.service.js";
 import { sendEmail } from "../../services/integration.service.js";
 import { NOTIFICATION_TYPES, notifyOwners } from "../../services/notification.service.js";
-import { logAuditEvent } from "../../services/audit-log.service.js";
 import {
   activateTenant,
   createTenantWithOwnerInvite,
@@ -36,7 +43,6 @@ import {
   revokeElevation,
   transferOwnership,
 } from "../../services/tenant.service.js";
-import { softDeleteTenant } from "../../db/queries/tenants.js";
 
 type Bindings = Env;
 
@@ -100,8 +106,10 @@ superTenantsRouter.get("/tenants", async (c) => {
        AND id IN (
          SELECT tenant_id FROM users
          WHERE is_owner = 1 AND status != 'deleted'
-       )`
-  ).run().catch(() => { });
+       )`,
+  )
+    .run()
+    .catch(() => {});
 
   const { rows, nextCursor } = await listTenants(c.env.DB, {
     limit: Math.min(Number(limit) || 20, 100),
@@ -141,14 +149,29 @@ superTenantsRouter.post("/tenants", zValidator("json", CreateTenantSchema), asyn
   } catch (err) {
     const e = err as Error & { code?: string };
     if (e.code === "email_taken") {
-      return problemResponse(c, 409, "Email do owner já está registado na plataforma.", "email_taken");
+      return problemResponse(
+        c,
+        409,
+        "Email do owner já está registado na plataforma.",
+        "email_taken",
+      );
     }
     if (e.code === "invite_pending") {
-      return problemResponse(c, 409, "Já existe um convite pendente para este owner.", "invite_pending");
+      return problemResponse(
+        c,
+        409,
+        "Já existe um convite pendente para este owner.",
+        "invite_pending",
+      );
     }
     // UNIQUE constraint violation on tenants.email
     if (e.message?.includes("UNIQUE") || e.message?.includes("unique")) {
-      return problemResponse(c, 409, "Email da empresa já existe na plataforma.", "tenant_email_taken");
+      return problemResponse(
+        c,
+        409,
+        "Email da empresa já existe na plataforma.",
+        "tenant_email_taken",
+      );
     }
     log.error({ err: String(e) }, "tenant_create_error");
     return problemResponse(c, 500, "Erro interno ao criar empresa.", "internal_error");
@@ -204,7 +227,7 @@ superTenantsRouter.get("/tenants/:id", async (c) => {
 
   // Auto-recover: se tenant está 'pending' mas já tem owner activo, activar
   if (tenant.status === "pending" && owner) {
-    await activateTenant(c.env.DB, tenantId).catch(() => { });
+    await activateTenant(c.env.DB, tenantId).catch(() => {});
     tenant = { ...tenant, status: "active" };
   }
 
@@ -227,8 +250,8 @@ superTenantsRouter.get("/tenants/:id/users", async (c) => {
   ]);
 
   // Separar owner temp do owner fixo nos membros
-  const tempOwners = membersResult.rows.filter(u => u.is_temp_owner === 1);
-  const regularMembers = membersResult.rows.filter(u => u.is_temp_owner === 0);
+  const tempOwners = membersResult.rows.filter((u) => u.is_temp_owner === 1);
+  const regularMembers = membersResult.rows.filter((u) => u.is_temp_owner === 0);
 
   return c.json({
     owner: ownerRow,
@@ -266,6 +289,16 @@ superTenantsRouter.post("/tenants/:id/activate", async (c) => {
   const tenant = await getTenantById(c.env.DB, tenantId);
   if (!tenant) return problemResponse(c, 404, "Not Found", "Empresa não encontrada");
 
+  // Impedir activação manual de empresas pendentes (só devem ser activadas via email)
+  if (tenant.status === "pending") {
+    return problemResponse(
+      c,
+      400,
+      "Bad Request",
+      "Não é possível activar manualmente uma empresa pendente. Aguarde a confirmação do owner.",
+    );
+  }
+
   await activateTenant(c.env.DB, tenantId);
   // M6.3 — Notificar owner que empresa foi ativada
   await notifyOwners(c.env.DB, tenantId, {
@@ -274,7 +307,7 @@ superTenantsRouter.post("/tenants/:id/activate", async (c) => {
     bodyKey: "notif_tenant_activated_body",
     params: { name: tenant.name },
     link: "/dashboard",
-  }).catch(() => { });
+  }).catch(() => {});
 
   const actor = c.get("user");
   await logAuditEvent(c.env.DB, {
@@ -296,6 +329,16 @@ superTenantsRouter.post("/tenants/:id/deactivate", async (c) => {
   const tenant = await getTenantById(c.env.DB, tenantId);
   if (!tenant) return problemResponse(c, 404, "Not Found", "Empresa não encontrada");
 
+  // Impedir desactivação manual de empresas pendentes (só devem ser activadas via email)
+  if (tenant.status === "pending") {
+    return problemResponse(
+      c,
+      400,
+      "Bad Request",
+      "Não é possível desactivar uma empresa pendente. Aguarde a confirmação do owner.",
+    );
+  }
+
   // Invalidar sessões de todos os utilizadores da empresa
   const users = (
     await c.env.DB.prepare("SELECT id FROM users WHERE tenant_id = ?1 AND status != 'deleted'")
@@ -303,7 +346,9 @@ superTenantsRouter.post("/tenants/:id/deactivate", async (c) => {
       .all<{ id: string }>()
   ).results;
 
-  await Promise.all((users ?? []).map((u: { id: string }) => deleteAllUserSessions(c.env.DB, u.id)));
+  await Promise.all(
+    (users ?? []).map((u: { id: string }) => deleteAllUserSessions(c.env.DB, u.id)),
+  );
   await deactivateTenant(c.env.DB, tenantId);
 
   log.info({ tenant_id: tenantId, sessions_cleared: users.length }, "tenant_deactivated");
@@ -335,7 +380,9 @@ superTenantsRouter.post("/tenants/:id/soft-delete", async (c) => {
       .bind(tenantId)
       .all<{ id: string }>()
   ).results;
-  await Promise.all((users ?? []).map((u: { id: string }) => deleteAllUserSessions(c.env.DB, u.id)));
+  await Promise.all(
+    (users ?? []).map((u: { id: string }) => deleteAllUserSessions(c.env.DB, u.id)),
+  );
 
   await softDeleteTenant(c.env.DB, tenantId);
   log.info({ tenant_id: tenantId }, "tenant_soft_deleted");
@@ -405,7 +452,7 @@ superTenantsRouter.post("/tenants/:id/elevate", zValidator("json", ElevateSchema
     bodyKey: "notif_elevation_granted_body",
     params: { duration_h: Math.round((duration_seconds ?? 86400) / 3600) },
     link: "/dashboard",
-  }).catch(() => { });
+  }).catch(() => {});
   log.info({ tenant_id: tenantId, user_id }, "temp_owner_elevated");
   return c.json({ ok: true });
 });
@@ -424,7 +471,7 @@ superTenantsRouter.delete("/tenants/:id/elevate", async (c) => {
     titleKey: "notif_elevation_revoked_title",
     bodyKey: "notif_elevation_revoked_body",
     link: "/dashboard",
-  }).catch(() => { });
+  }).catch(() => {});
   log.info({ tenant_id: tenantId, user_id }, "elevation_revoked");
   return c.json({ ok: true });
 });

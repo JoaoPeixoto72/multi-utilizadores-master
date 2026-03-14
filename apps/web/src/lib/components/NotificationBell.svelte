@@ -184,10 +184,19 @@ function handleOutside(e: MouseEvent) {
   }
 }
 
+// Fechar com Escape
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape" && open) {
+    open = false;
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}
+
 const unread = $derived(localNotifications.filter((n) => n.is_read === 0).length);
 </script>
 
-<svelte:window onclick={handleOutside} />
+<svelte:window onclick={handleOutside} onkeydown={handleKeydown} />
 
 <div class="notif-bell-wrap">
   <button
@@ -206,15 +215,16 @@ const unread = $derived(localNotifications.filter((n) => n.is_read === 0).length
   </button>
 
   {#if open}
-     <!-- svelte-ignore a11y_no_static_element_interactions -->
-     <div
-       class="notif-popup"
-       tabindex="-1"
-       role="dialog"
-       aria-label={m.notif_title()}
-       onclick={(e) => e.stopPropagation()}
-       onkeydown={(e) => e.stopPropagation()}
-     >
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="notif-popup"
+        tabindex="-1"
+        role="dialog"
+        aria-modal="true"
+        aria-label={m.notif_title()}
+        onclick={(e) => e.stopPropagation()}
+        onkeydown={(e) => e.stopPropagation()}
+      >
       <!-- Cabeçalho popup -->
       <div class="popup-header">
         <span class="popup-title">{m.notif_title()}</span>

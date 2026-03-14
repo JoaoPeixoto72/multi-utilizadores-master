@@ -262,7 +262,7 @@
   const definedCategories = [...new Set(PROVIDER_DEFS.map((p) => p.category))];
 
   // Tab activa
-  let activeTab = $state(definedCategories[0]);
+  let activeTab = $state(definedCategories[0] ?? "email");
 
   // ── Helpers para integrations ──────────────────────────────────────────────
   function getIntegration(provider: string) {
@@ -337,6 +337,15 @@
     verifyResult = { success: false, message: "", provider: null };
   }
 
+  // Fechar modal com Escape
+  function handleModalKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape" && verifyId !== null) {
+      closeVerify();
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+
   // ── Query params (link de confirmação do email) ────────────────────────────
   $effect(() => {
     const confirm = page.url.searchParams.get("confirm");
@@ -364,6 +373,8 @@
     });
   }
 </script>
+
+<svelte:window onkeydown={handleModalKeydown} />
 
 <div class="page">
   <!-- ── Header ── -->

@@ -363,12 +363,12 @@
     </div>
   </div>
 
-  <!-- ── Acções ── -->
+    <!-- ── Acções ── -->
   {#if data.tenant.status !== "deleted"}
     <div class="card">
       <h2 class="card-title">{m.common_actions()}</h2>
       <div class="actions-row">
-        {#if data.tenant.status === "inactive" || data.tenant.status === "pending"}
+        {#if data.tenant.status === "inactive"}
           <form
             method="POST"
             action="?/activate"
@@ -385,7 +385,7 @@
               {m.super_tenant_activate()}
             </Button>
           </form>
-        {:else}
+        {:else if data.tenant.status === "active"}
           <form
             method="POST"
             action="?/deactivate"
