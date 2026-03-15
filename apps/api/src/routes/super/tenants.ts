@@ -129,7 +129,7 @@ superTenantsRouter.post("/tenants", zValidator("json", CreateTenantSchema), asyn
   const body = c.req.valid("json");
   const actor = c.get("user");
 
-  let result;
+  let result: Awaited<ReturnType<typeof createTenantWithOwnerInvite>>;
   try {
     result = await createTenantWithOwnerInvite(c.env.DB, {
       name: body.name,

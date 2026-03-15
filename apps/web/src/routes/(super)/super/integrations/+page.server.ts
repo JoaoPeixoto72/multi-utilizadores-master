@@ -7,6 +7,12 @@
 
 import type { Actions, PageServerLoad } from "./$types";
 
+interface Platform {
+  env: {
+    API: Fetcher;
+  };
+}
+
 interface Integration {
   id: string;
   category: string;
@@ -37,7 +43,7 @@ export const load: PageServerLoad = async ({ platform, request }) => {
 };
 
 /** Obtém CSRF token para usar nas chamadas fetch internas */
-async function getCsrf(platform: any, cookiesHeader: string): Promise<string> {
+async function getCsrf(platform: Platform, cookiesHeader: string): Promise<string> {
   try {
     const r = await platform.env.API.fetch(
       new Request(`https://internal/api/auth/csrf`, {

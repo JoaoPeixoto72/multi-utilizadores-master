@@ -25,13 +25,13 @@
   "files": {
     "includes": [
       "**",
-      "!**/node_modules/**",
-      "!**/.turbo/**",
-      "!**/.svelte-kit/**",
-      "!**/dist/**",
-      "!**/.wrangler/**",
-      "!apps/web/src/paraglide/**",
-      "!apps/web/src/lib/paraglide/**",
+      "!**/node_modules",
+      "!**/.turbo",
+      "!**/.svelte-kit",
+      "!**/dist",
+      "!**/.wrangler",
+      "!apps/web/src/paraglide",
+      "!apps/web/src/lib/paraglide",
       "!**/*.svelte"
     ]
   }

@@ -1,10 +1,8 @@
 import fs from "fs";
 
 let txt = fs.readFileSync("check.json", "utf8");
-txt = txt.replace(
-  /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
-  "",
-);
+// biome-ignore lint/suspicious/noControlCharactersInRegex: Regex to strip ANSI escape codes
+txt = txt.replace(/[\x1b\x9b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "");
 
 const lines = txt.split("\n");
 const jsonLines = [];
@@ -49,7 +47,9 @@ try {
   Object.entries(msgCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
-    .forEach((x) => console.log(x[1] + "x: " + x[0]));
+    .forEach((x) => {
+      console.log(x[1] + "x: " + x[0]);
+    });
 
   const fileGroups = {};
   for (const d of allDiags) {

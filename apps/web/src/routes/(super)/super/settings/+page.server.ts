@@ -1,8 +1,24 @@
 import { fail } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 
+interface PlatformEnv {
+  API: Fetcher;
+  APP_ENV?: string;
+  APP_URL?: string;
+  CSRF_SECRET?: string;
+  SESSION_SECRET?: string;
+  ENCRYPTION_KEY?: string;
+  CF_ACCOUNT_ID?: string;
+  CF_API_TOKEN?: string;
+  SENTRY_DSN?: string;
+}
+
+interface Platform {
+  env: PlatformEnv;
+}
+
 export const load: PageServerLoad = async ({ platform, request }) => {
-  const env = (platform as any)?.env as Record<string, string | undefined> | undefined;
+  const env = (platform as Platform)?.env;
   const cookiesHeader = request.headers.get("cookie") ?? "";
 
   const res = await platform.env.API.fetch(
