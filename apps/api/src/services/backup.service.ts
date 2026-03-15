@@ -196,7 +196,8 @@ export async function generateBackup(
     });
 
     const row = await getBackupById(db, backup_id);
-    return row!;
+    if (!row) throw new Error("Backup not found after generation");
+    return row;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await updateBackupFailed(db, backup_id, msg);

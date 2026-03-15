@@ -63,7 +63,7 @@ export async function optimizeImage(file: File, options: OptimizeImageOptions = 
           }
 
           // 5. Reconstruir um objecto File
-          const newFileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+          const newFileName = `${file.name.replace(/\.[^/.]+$/, "")}.webp`;
           const optimizedFile = new File([blob], newFileName, {
             type: format,
             lastModified: Date.now(),

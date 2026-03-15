@@ -18,12 +18,14 @@ export const handle: Handle = async ({ event, resolve }) => {
   const rawTheme = parseCookie(cookieHeader, "cf_theme");
 
   const layout = (VALID_LAYOUTS as readonly string[]).includes(rawLayout ?? "")
-    ? rawLayout!
+    ? (rawLayout as string)
     : "sidebar";
   const palette = (VALID_PALETTES as readonly string[]).includes(rawPalette ?? "")
-    ? rawPalette!
+    ? (rawPalette as string)
     : "indigo";
-  const theme = (VALID_THEMES as readonly string[]).includes(rawTheme ?? "") ? rawTheme! : "light";
+  const theme = (VALID_THEMES as readonly string[]).includes(rawTheme ?? "")
+    ? (rawTheme as string)
+    : "light";
 
   return resolve(event, {
     transformPageChunk({ html }) {
