@@ -22,9 +22,61 @@
   let activeTab = $state<"branding" | "design" | "system" | "env">("branding");
   let isSaving = $state(false);
 
-  // Build static initial object directly from data in a single expression
-  let config = $state((() => {
-    const appConfig = data.appConfig || {};
+  // Helper: normalizar cor para comparação (lowercase, expandir hex curto)
+  function normalizeColor(color: string): string {
+    if (!color) return "";
+    let c = color.toLowerCase().trim();
+    // Expandir hex curto (#fff -> #ffffff)
+    if (c.length === 4 && c.startsWith("#")) {
+      c = "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
+    }
+    return c;
+  }
+
+  const activePresetId = $derived.by(() => {
+    const current = {
+      ui_color_primary: normalizeColor(config.ui_color_primary),
+      ui_color_secondary: normalizeColor(config.ui_color_secondary),
+      ui_color_background: normalizeColor(config.ui_color_background),
+      ui_color_surface: normalizeColor(config.ui_color_surface),
+      ui_color_action_btn: normalizeColor(config.ui_color_action_btn),
+      ui_color_action_text: normalizeColor(config.ui_color_action_text),
+      ui_color_warning: normalizeColor(config.ui_color_warning),
+      ui_color_danger: normalizeColor(config.ui_color_danger),
+      ui_color_link: normalizeColor(config.ui_color_link),
+    };
+
+    for (const preset of rapidPresets) {
+      const p = {
+        ui_color_primary: normalizeColor(preset.colors.ui_color_primary),
+        ui_color_secondary: normalizeColor(preset.colors.ui_color_secondary),
+        ui_color_background: normalizeColor(preset.colors.ui_color_background),
+        ui_color_surface: normalizeColor(preset.colors.ui_color_surface),
+        ui_color_action_btn: normalizeColor(preset.colors.ui_color_action_btn),
+        ui_color_action_text: normalizeColor(preset.colors.ui_color_action_text),
+        ui_color_warning: normalizeColor(preset.colors.ui_color_warning),
+        ui_color_danger: normalizeColor(preset.colors.ui_color_danger),
+        ui_color_link: normalizeColor(preset.colors.ui_color_link),
+      };
+      if (
+        p.ui_color_primary === current.ui_color_primary &&
+        p.ui_color_secondary === current.ui_color_secondary &&
+        p.ui_color_background === current.ui_color_background &&
+        p.ui_color_surface === current.ui_color_surface &&
+        p.ui_color_action_btn === current.ui_color_action_btn &&
+        p.ui_color_action_text === current.ui_color_action_text &&
+        p.ui_color_warning === current.ui_color_warning &&
+        p.ui_color_danger === current.ui_color_danger &&
+        p.ui_color_link === current.ui_color_link
+      ) {
+        return preset.id;
+      }
+    }
+    return null;
+  });
+
+  // Build config from data.appConfig - reactive to data changes
+  function buildConfig(appConfig: Record<string, string>) {
     const palette = (appConfig.ui_theme_palette || data.palette || "indigo") as Palette;
     const brandColor = themeStore.PALETTE_COLORS[palette] || "#4f46e5";
     
@@ -45,7 +97,7 @@
       ui_input_border_active: appConfig.ui_input_border_active ?? "true",
       ui_input_border_color: appConfig.ui_input_border_color ?? "",
       ui_input_bg_color: appConfig.ui_input_bg_color ?? "",
-      ui_input_padding: appConfig.ui_input_padding ?? "12px",
+      ui_input_padding: appConfig.ui_input_padding ?? "",
 
       ui_button_radius: appConfig.ui_button_radius ?? "full",
       ui_button_bg_color: appConfig.ui_button_bg_color ?? "",
@@ -59,7 +111,27 @@
       sys_image_max_kb: appConfig.sys_image_max_kb || "200",
       sys_image_max_px: appConfig.sys_image_max_px || "512",
     };
-  })());
+  }
+
+  let config = $state(buildConfig(data.appConfig || {}));
+
+  // Track if user has made changes
+  let userHasEdited = $state(false);
+
+  // When data.appConfig changes (after save), only update empty/default values
+  // This preserves user input while still getting fresh saved values
+  $effect(() => {
+    const newConfig = buildConfig(data.appConfig || {});
+    // Only update values that are empty or haven't been edited by user
+    if (!userHasEdited) {
+      config = newConfig;
+    }
+  });
+
+  // Mark as edited when user changes any color
+  function handleColorChange() {
+    userHasEdited = true;
+  }
 
 
 
@@ -256,6 +328,7 @@
   ];
 
   function applyPreset(preset: (typeof rapidPresets)[0]) {
+    userHasEdited = true;
     // Update each color property individually to ensure reactivity
     for (const [key, value] of Object.entries(preset.colors)) {
       (config as any)[key] = value;
@@ -349,7 +422,8 @@
       isSaving = true;
       return async ({ update }) => {
         isSaving = false;
-        await update();
+        userHasEdited = false;
+        await update({ invalidateAll: true });
       };
     }}
   >
@@ -379,15 +453,18 @@
                         id={cat.id}
                         type="color"
                         class="hex-picker"
-                        value={(config as any)[cat.id]}
-                        oninput={(e) =>
-                          ((config as any)[cat.id] = e.currentTarget.value)}
+                        value={(config as any)[cat.id] || "#000000"}
+                        oninput={(e) => {
+                          handleColorChange();
+                          ((config as any)[cat.id] = e.currentTarget.value);
+                        }}
                       />
                       <input
                         type="text"
                         name={cat.id}
                         class="hex-input"
                         bind:value={(config as any)[cat.id]}
+                        oninput={handleColorChange}
                         placeholder="#hex"
                       />
                     </div>
@@ -402,6 +479,7 @@
                     <button
                       type="button"
                       class="preset-btn"
+                      class:active={activePresetId === p.id}
                       onclick={() => applyPreset(p)}
                     >
                       {p.name}
@@ -1117,6 +1195,11 @@
   }
   .preset-btn:hover {
     background: var(--bg-hover);
+    border-color: var(--brand-500);
+    color: var(--brand-700);
+  }
+  .preset-btn.active {
+    background: var(--brand-100);
     border-color: var(--brand-500);
     color: var(--brand-700);
   }
