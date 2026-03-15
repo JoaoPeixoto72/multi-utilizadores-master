@@ -6,10 +6,11 @@
  *   - se expirada (401), faz login automático e guarda nova sessão
  *   - rate limiting: max 5 logins/min por IP — testes sequenciais evitam isso
  */
+
+import * as fs from "node:fs";
+import * as path from "node:path";
+import * as url from "node:url";
 import { expect, type Page } from "@playwright/test";
-import * as fs from "fs";
-import * as path from "path";
-import * as url from "url";
 
 export const SUPER_EMAIL = "acemang@gmail.com";
 export const SUPER_PASSWORD = "Teste1234!@";

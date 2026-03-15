@@ -1,9 +1,6 @@
 // apps/api/src/db/queries/backups.ts
 // M8 — Queries de backups e configuração de backup automático
 
-// @ts-expect-error
-import { aliasedTable, and, asc, desc, eq, gt, isNull, sql } from "drizzle-orm";
-
 export interface BackupRow {
   id: string;
   tenant_id: string;

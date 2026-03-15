@@ -25,7 +25,6 @@ import {
   activateIntegrationById,
   createIntegration,
   deactivateIntegrationById,
-  getActiveEmailAdapter,
   getAllIntegrations,
   getEmailAdapterById,
   type IntegrationServiceError,

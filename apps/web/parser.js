@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "node:fs";
 
 let txt = fs.readFileSync("check.json", "utf8");
 // biome-ignore lint/suspicious/noControlCharactersInRegex: Regex to strip ANSI escape codes
@@ -48,7 +48,7 @@ try {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
     .forEach((x) => {
-      console.log(x[1] + "x: " + x[0]);
+      console.log(`${x[1]}x: ${x[0]}`);
     });
 
   const fileGroups = {};
@@ -60,8 +60,8 @@ try {
   const sortedFiles = Object.entries(fileGroups).sort((a, b) => b[1].length - a[1].length);
   console.log("\nTop files:");
   sortedFiles.slice(0, 15).forEach((x) => {
-    console.log(x[1].length + "x: " + x[0]);
-    console.log("  -> " + x[1][0].split("\n")[0]);
+    console.log(`${x[1].length}x: ${x[0]}`);
+    console.log(`  -> ${x[1][0].split("\n")[0]}`);
   });
 } catch (e) {
   console.log("Failed to parse:", e.message);

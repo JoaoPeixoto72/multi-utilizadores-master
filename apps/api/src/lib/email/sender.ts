@@ -50,9 +50,9 @@ export async function sendEmail(env: EmailEnv, opts: SendEmailOptions): Promise<
       from,
       to: Array.isArray(opts.to) ? opts.to : [opts.to],
       subject: opts.subject,
-      html: opts.html.substring(0, 200) + "...",
+      html: `${opts.html.substring(0, 200)}...`,
     });
-    return { ok: true, id: "dry-run-" + crypto.randomUUID() };
+    return { ok: true, id: `dry-run-${crypto.randomUUID()}` };
   }
 
   try {

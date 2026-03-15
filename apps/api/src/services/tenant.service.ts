@@ -10,9 +10,7 @@ import { getAppConfig } from "../db/queries/app-config.js";
 import {
   type CreateTenantInput,
   createTenant,
-  getTenantById,
   physicalDeleteTenant,
-  softDeleteTenant,
   type TenantRow,
   updateTenantOwner,
   updateTenantStatus,

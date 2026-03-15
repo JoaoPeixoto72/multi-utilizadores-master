@@ -115,7 +115,7 @@ invitationsRouter.post("/:token/accept", zValidator("json", AcceptSchema), async
       target_type: "user",
       target_id: user.id,
       target_name: body.display_name ?? invitation.email,
-      was_temp_owner: invitation.is_owner === 1 ? true : false,
+      was_temp_owner: invitation.is_owner === 1,
     });
   }
 
