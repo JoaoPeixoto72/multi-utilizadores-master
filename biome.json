@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.7/schema.json",
   "assist": {
     "actions": {
       "source": {
@@ -25,12 +25,14 @@
   "files": {
     "includes": [
       "**",
-      "!node_modules",
-      "!.svelte-kit",
-      "!dist",
-      "!apps/web/src/paraglide",
-      "!apps/web/src/lib/paraglide",
-      "!*.svelte"
+      "!**/node_modules/**",
+      "!**/.turbo/**",
+      "!**/.svelte-kit/**",
+      "!**/dist/**",
+      "!apps/web/src/paraglide/**",
+      "!apps/web/src/lib/paraglide/**",
+      "!**/*.svelte"
     ]
   }
 }
+
