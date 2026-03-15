@@ -15,6 +15,7 @@
             actionText: string;
             warning: string;
             danger: string;
+            textPrimary?: string;
         };
         radius: string;
     }
@@ -29,6 +30,7 @@
     };
 
     const r = $derived(radiusMap[radius] || "12px");
+    const tp = $derived(colors.textPrimary || "#111827");
 </script>
 
 <div
@@ -41,6 +43,7 @@
     style:--at={colors.actionText}
     style:--w={colors.warning}
     style:--d={colors.danger}
+    style:--tp={tp}
     style:--r={r}
 >
     <div class="mock-window">
@@ -143,6 +146,7 @@
         border-radius: 16px;
         padding: 24px;
         border: 1px dashed #cbd5e1;
+        isolation: isolate;
     }
 
     .mock-window {
@@ -154,8 +158,9 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        color: #1e293b;
+        color: var(--tp, #111827);
         font-family: sans-serif;
+        isolation: isolate;
     }
 
     /* Header */

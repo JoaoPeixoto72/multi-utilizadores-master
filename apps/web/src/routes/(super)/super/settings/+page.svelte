@@ -35,6 +35,7 @@
 
   const activePresetId = $derived.by(() => {
     const current = {
+      ui_color_text_primary: normalizeColor(config.ui_color_text_primary),
       ui_color_primary: normalizeColor(config.ui_color_primary),
       ui_color_secondary: normalizeColor(config.ui_color_secondary),
       ui_color_background: normalizeColor(config.ui_color_background),
@@ -48,6 +49,7 @@
 
     for (const preset of rapidPresets) {
       const p = {
+        ui_color_text_primary: normalizeColor(preset.colors.ui_color_text_primary),
         ui_color_primary: normalizeColor(preset.colors.ui_color_primary),
         ui_color_secondary: normalizeColor(preset.colors.ui_color_secondary),
         ui_color_background: normalizeColor(preset.colors.ui_color_background),
@@ -59,6 +61,7 @@
         ui_color_link: normalizeColor(preset.colors.ui_color_link),
       };
       if (
+        p.ui_color_text_primary === current.ui_color_text_primary &&
         p.ui_color_primary === current.ui_color_primary &&
         p.ui_color_secondary === current.ui_color_secondary &&
         p.ui_color_background === current.ui_color_background &&
@@ -72,7 +75,7 @@
         return preset.id;
       }
     }
-    return null;
+    return "custom";
   });
 
   // Build config from data.appConfig - reactive to data changes
@@ -83,6 +86,7 @@
     return {
       ui_theme_palette: palette,
       ui_theme_secondary: appConfig.ui_theme_secondary || "slate",
+      ui_color_text_primary: appConfig.ui_color_text_primary || "#111827",
       ui_color_primary: appConfig.ui_color_primary || brandColor,
       ui_color_secondary: appConfig.ui_color_secondary || "#64748b",
       ui_color_background: appConfig.ui_color_background || "#f8fafc",
@@ -113,16 +117,19 @@
     };
   }
 
-  let config = $state(buildConfig(data.appConfig || {}));
+  // Initialize config with defaults - $effect will sync with data.appConfig
+  let config = $state(buildConfig({}));
 
   // Track if user has made changes
   let userHasEdited = $state(false);
 
   // When data.appConfig changes (after save), only update empty/default values
   // This preserves user input while still getting fresh saved values
+  // IMPORTANT: read data.appConfig directly inside $effect for Svelte 5 reactivity
   $effect(() => {
-    const newConfig = buildConfig(data.appConfig || {});
-    // Only update values that are empty or haven't been edited by user
+    const appCfg = data.appConfig;
+    const newConfig = buildConfig(appCfg || {});
+    // Only update values if user hasn't edited, or on initial load
     if (!userHasEdited) {
       config = newConfig;
     }
@@ -138,6 +145,11 @@
 
 
   const colorCategories = [
+    {
+      id: "ui_color_text_primary",
+      label: "Cor do Texto Principal",
+      hint: "Cor base do texto da interface (não inclui links).",
+    },
     {
       id: "ui_color_primary",
       label: "Cor Primária",
@@ -156,7 +168,7 @@
     {
       id: "ui_color_surface",
       label: "Fundo das Superfícies/Cards",
-      hint: "Fundo dos painéis e blocos na frente.",
+      hint: "Cor de fundo dos painéis e blocos na frente.",
     },
     {
       id: "ui_color_action_btn",
@@ -206,9 +218,10 @@
 
   const rapidPresets = [
     {
-      id: "original",
-      name: "Original (Reset)",
+      id: "indigo",
+      name: "Indigo",
       colors: {
+        ui_color_text_primary: "#111827",
         ui_color_primary: "#4f46e5",
         ui_color_secondary: "#64748b",
         ui_color_background: "#f8fafc",
@@ -221,14 +234,15 @@
       },
     },
     {
-      id: "modern",
-      name: "Moderno",
+      id: "blue",
+      name: "Blue",
       colors: {
+        ui_color_text_primary: "#111827",
         ui_color_primary: "#2563eb",
-        ui_color_secondary: "#64748b",
-        ui_color_background: "#f8fafc",
+        ui_color_secondary: "#3b82f6",
+        ui_color_background: "#eff6ff",
         ui_color_surface: "#ffffff",
-        ui_color_action_btn: "#2563eb",
+        ui_color_action_btn: "#3b82f6",
         ui_color_action_text: "#ffffff",
         ui_color_warning: "#f59e0b",
         ui_color_danger: "#dc2626",
@@ -236,39 +250,74 @@
       },
     },
     {
-      id: "vibrant",
-      name: "Vibrante",
+      id: "emerald",
+      name: "Emerald",
       colors: {
-        ui_color_primary: "#ec4899",
-        ui_color_secondary: "#8b5cf6",
-        ui_color_background: "#fdf2f8",
+        ui_color_text_primary: "#111827",
+        ui_color_primary: "#059669",
+        ui_color_secondary: "#10b981",
+        ui_color_background: "#ecfdf5",
         ui_color_surface: "#ffffff",
-        ui_color_action_btn: "#ec4899",
+        ui_color_action_btn: "#10b981",
         ui_color_action_text: "#ffffff",
-        ui_color_warning: "#f97316",
-        ui_color_danger: "#ef4444",
-        ui_color_link: "#ec4899",
+        ui_color_warning: "#f59e0b",
+        ui_color_danger: "#dc2626",
+        ui_color_link: "#059669",
       },
     },
     {
-      id: "soft",
-      name: "Suave",
+      id: "clean",
+      name: "Clean",
       colors: {
+        ui_color_text_primary: "#111827",
         ui_color_primary: "#6366f1",
-        ui_color_secondary: "#94a3b8",
-        ui_color_background: "#f1f5f9",
+        ui_color_secondary: "#64748b",
+        ui_color_background: "#f8fafc",
         ui_color_surface: "#ffffff",
-        ui_color_action_btn: "#f8fafc",
-        ui_color_action_text: "#475569",
-        ui_color_warning: "#fbbf24",
-        ui_color_danger: "#f87171",
-        ui_color_link: "#6366f1",
+        ui_color_action_btn: "#e2e8f0",
+        ui_color_action_text: "#1e293b",
+        ui_color_warning: "#f59e0b",
+        ui_color_danger: "#ef4444",
+        ui_color_link: "#4f46e5",
+      },
+    },
+    {
+      id: "sunset",
+      name: "Sunset",
+      colors: {
+        ui_color_text_primary: "#1c1917",
+        ui_color_primary: "#ea580c",
+        ui_color_secondary: "#c2410c",
+        ui_color_background: "#fff7ed",
+        ui_color_surface: "#ffffff",
+        ui_color_action_btn: "#ea580c",
+        ui_color_action_text: "#ffffff",
+        ui_color_warning: "#d97706",
+        ui_color_danger: "#dc2626",
+        ui_color_link: "#ea580c",
+      },
+    },
+    {
+      id: "rose",
+      name: "Rose",
+      colors: {
+        ui_color_text_primary: "#881337",
+        ui_color_primary: "#e11d48",
+        ui_color_secondary: "#f43f5e",
+        ui_color_background: "#fff1f2",
+        ui_color_surface: "#ffffff",
+        ui_color_action_btn: "#f43f5e",
+        ui_color_action_text: "#ffffff",
+        ui_color_warning: "#f97316",
+        ui_color_danger: "#dc2626",
+        ui_color_link: "#e11d48",
       },
     },
     {
       id: "dark",
-      name: "Escuro",
+      name: "Dark",
       colors: {
+        ui_color_text_primary: "#f8fafc",
         ui_color_primary: "#818cf8",
         ui_color_secondary: "#94a3b8",
         ui_color_background: "#0f172a",
@@ -277,52 +326,23 @@
         ui_color_action_text: "#f8fafc",
         ui_color_warning: "#fbbf24",
         ui_color_danger: "#f87171",
-        ui_color_link: "#818cf8",
+        ui_color_link: "#a5b4fc",
       },
     },
     {
-      id: "midnight",
-      name: "Midnight",
+      id: "ocean",
+      name: "Ocean",
       colors: {
-        ui_color_primary: "#8b5cf6",
-        ui_color_secondary: "#334155",
-        ui_color_background: "#020617",
-        ui_color_surface: "#0f172a",
-        ui_color_action_btn: "#1e293b",
-        ui_color_action_text: "#f1f5f9",
+        ui_color_text_primary: "#0c4a6e",
+        ui_color_primary: "#0891b2",
+        ui_color_secondary: "#06b6d4",
+        ui_color_background: "#ecfeff",
+        ui_color_surface: "#ffffff",
+        ui_color_action_btn: "#06b6d4",
+        ui_color_action_text: "#ffffff",
         ui_color_warning: "#f59e0b",
-        ui_color_danger: "#e11d48",
-        ui_color_link: "#a78bfa",
-      },
-    },
-    {
-      id: "nature",
-      name: "Natureza",
-      colors: {
-        ui_color_primary: "#059669",
-        ui_color_secondary: "#d97706",
-        ui_color_background: "#f0fdf4",
-        ui_color_surface: "#ffffff",
-        ui_color_action_btn: "#10b981",
-        ui_color_action_text: "#ffffff",
-        ui_color_warning: "#fbbf24",
         ui_color_danger: "#ef4444",
-        ui_color_link: "#059669",
-      },
-    },
-    {
-      id: "corporate",
-      name: "Corporativo",
-      colors: {
-        ui_color_primary: "#1e40af",
-        ui_color_secondary: "#475569",
-        ui_color_background: "#f8fafc",
-        ui_color_surface: "#ffffff",
-        ui_color_action_btn: "#1e3a8a",
-        ui_color_action_text: "#ffffff",
-        ui_color_warning: "#d97706",
-        ui_color_danger: "#b91c1c",
-        ui_color_link: "#1e40af",
+        ui_color_link: "#0891b2",
       },
     },
   ];
@@ -335,14 +355,14 @@
     }
     // Map preset to base palette for theme cookie
     const presetToPalette: Record<string, Palette> = {
-      original: "indigo",
-      modern: "indigo",
-      vibrant: "rose",
-      soft: "indigo",
+      indigo: "indigo",
+      blue: "indigo",
+      emerald: "emerald",
+      clean: "indigo",
+      sunset: "amber",
+      rose: "rose",
       dark: "indigo",
-      midnight: "indigo",
-      nature: "emerald",
-      corporate: "indigo",
+      ocean: "ocean",
     };
     const basePalette = presetToPalette[preset.id] || "indigo";
     config.ui_theme_palette = basePalette;
@@ -485,6 +505,13 @@
                       {p.name}
                     </button>
                   {/each}
+                  <button
+                    type="button"
+                    class="preset-btn preset-custom"
+                    class:active={activePresetId === "custom"}
+                  >
+                    Custom
+                  </button>
                 </div>
               </div>
 
@@ -521,6 +548,7 @@
                   actionText: config.ui_color_action_text,
                   warning: config.ui_color_warning,
                   danger: config.ui_color_danger,
+                  textPrimary: config.ui_color_text_primary,
                 }}
                 radius={config.ui_border_radius}
               />
@@ -1202,6 +1230,15 @@
     background: var(--brand-100);
     border-color: var(--brand-500);
     color: var(--brand-700);
+  }
+  .preset-custom {
+    border-style: dashed;
+  }
+  .preset-custom.active {
+    background: var(--bg-surface-subtle);
+    border-style: dashed;
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
   }
 
   .tips-box {

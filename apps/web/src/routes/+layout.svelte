@@ -91,6 +91,9 @@
     if (colorWarning) root.style.setProperty("--color-warning", colorWarning);
     if (colorDanger) root.style.setProperty("--color-danger", colorDanger);
     if (colorLink) root.style.setProperty("--color-link", colorLink);
+    // Apply text primary color if custom
+    const textPrimary = appConfig.ui_color_text_primary;
+    if (textPrimary) root.style.setProperty("--text-primary", textPrimary);
   });
 </script>
 
