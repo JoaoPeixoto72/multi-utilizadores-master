@@ -27,6 +27,7 @@ export const actions: Actions = {
     const member_seat_limit = Number(data.get("member_seat_limit") ?? 0);
     const client_seat_limit = Number(data.get("client_seat_limit") ?? 0);
     const storage_limit_bytes = Number(data.get("storage_limit_bytes") ?? 1073741824);
+    const daily_email_limit = Number(data.get("daily_email_limit") ?? 100);
     const csrf = data.get("_csrf")?.toString() ?? "";
 
     if (!name || !email || !owner_email) {
@@ -52,6 +53,7 @@ export const actions: Actions = {
           member_seat_limit,
           client_seat_limit,
           storage_limit_bytes,
+          daily_email_limit,
         }),
       }),
     );
@@ -71,7 +73,12 @@ export const actions: Actions = {
       return fail(500, { error: "generic", name, email, owner_email });
     }
 
-    const body = (await res.json()) as { tenant: { id: string } };
-    redirect(303, `/super/tenants/${body.tenant.id}?created=1`);
+    const result = (await res.json()) as { tenant: { id: string } };
+    // Garantir que a criação foi bem-sucedida e temos um ID de tenant
+    if (!result || !result.tenant || !result.tenant.id) {
+      return fail(500, { error: "generic", name, email, owner_email });
+    }
+
+    redirect(303, `/super/tenants?created=1`);
   },
 };

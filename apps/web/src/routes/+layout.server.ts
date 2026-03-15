@@ -5,9 +5,15 @@ import type { LayoutServerLoad } from "./$types";
  * e o utilizador autenticado (sessão)
  * Persistência via cookies (NUNCA localStorage — STACK_LOCK.md §14)
  */
-export const load: LayoutServerLoad = async ({ request, cookies, platform }) => {
+export const load: LayoutServerLoad = async ({ request, cookies, platform, setHeaders }) => {
   console.log("[+layout.server.ts] load entered");
   console.log("WEB DEPLOY MARKER 21:55");
+
+  // Prevent caching to ensure fresh branding colors on every request
+  setHeaders({
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    Pragma: "no-cache",
+  });
 
   const cookiesHeader = request.headers.get("cookie") ?? "";
 
@@ -53,30 +59,26 @@ export const load: LayoutServerLoad = async ({ request, cookies, platform }) => 
     // ignorar erros de rede — não autenticado
   }
   console.log("[+layout.server.ts] user is", user ? "present" : "null");
-
-  // Obter configurações globais se for super_user
-  if (user?.role === "super_user") {
-    try {
-      const configUrl = `https://internal/api/super/settings/config`;
-      console.log("[+layout.server.ts] calling GET", configUrl);
-      const res = await platform.env.API.fetch(
-        new Request(configUrl, {
-          headers: {
-            cookie: cookiesHeader,
-          },
-        }),
-      );
-      const bodyText = await res.text();
-      console.log("[+layout.server.ts] response status:", res.status);
-      console.log("[+layout.server.ts] response body:", bodyText);
-      if (res.ok) {
-        const data = JSON.parse(bodyText) as { config: Record<string, string> };
-        appConfig = data.config || {};
-      }
-    } catch (e) {
-      console.log("[+layout.server.ts] error fetching config:", e);
-      // ignorar erros de fetch na configuração
+  try {
+    const configUrl = `https://internal/api/super/settings/config`;
+    console.log("[+layout.server.ts] calling GET", configUrl);
+    const res = await platform.env.API.fetch(
+      new Request(configUrl, {
+        headers: {
+          cookie: cookiesHeader,
+        },
+      }),
+    );
+    const bodyText = await res.text();
+    console.log("[+layout.server.ts] response status:", res.status);
+    console.log("[+layout.server.ts] response body:", bodyText);
+    if (res.ok) {
+      const data = JSON.parse(bodyText) as { config: Record<string, string> };
+      appConfig = data.config || {};
     }
+  } catch (e) {
+    console.log("[+layout.server.ts] error fetching config:", e);
+    // ignorar erros de fetch na configuração
   }
 
   // Obter CSRF token (necessário nos formulários de mutação)
@@ -106,7 +108,8 @@ export const load: LayoutServerLoad = async ({ request, cookies, platform }) => 
 
   const layout = cookies.get("cf_layout") ?? "sidebar";
   const theme = cookies.get("cf_theme") ?? "light";
-  // A cor preferencial da aplicação sobrepõe-se à cookie se estiver configurada globalmente
+  // Prioritize appConfig over cookie when super user has configured it
+  // This ensures theme changes from super settings are applied immediately
   const palette = appConfig.ui_theme_palette || cookies.get("cf_palette") || "indigo";
   const radius = appConfig.ui_border_radius || "lg";
   const fontFamily = appConfig.ui_font_family || "inter";

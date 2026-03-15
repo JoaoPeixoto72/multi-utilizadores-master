@@ -49,11 +49,21 @@ interface TenantUsers {
   clientCount: number;
 }
 
-export const load: PageServerLoad = async ({ params, fetch, url, parent }) => {
+export const load: PageServerLoad = async ({ params, url, parent, request, platform }) => {
   const { csrfToken } = await parent();
+
+  const tenantId = params.id;
+
+  const apiUrl = `https://internal/api/super/tenants/${tenantId}`;
+  const usersApiUrl = `https://internal/api/super/tenants/${tenantId}/users`;
+
+  const headers = {
+    cookie: request.headers.get("cookie") ?? "",
+  };
+
   const [res, usersRes] = await Promise.all([
-    fetch(`/api/super/tenants/${params.id}`),
-    fetch(`/api/super/tenants/${params.id}/users`),
+    platform.env.API.fetch(new Request(apiUrl, { headers })),
+    platform.env.API.fetch(new Request(usersApiUrl, { headers })),
   ]);
 
   if (res.status === 404) {
@@ -76,18 +86,39 @@ export const load: PageServerLoad = async ({ params, fetch, url, parent }) => {
         clientCount: 0,
       };
 
+  // Fetch pending invitation for pending tenants
+  let pendingInvitation = null;
+  if (body.tenant.status === "pending") {
+    const inviteApiUrl = `https://internal/api/super/tenants/${tenantId}/invitation`;
+    const inviteRes = await platform.env.API.fetch(new Request(inviteApiUrl, { headers }));
+    if (inviteRes.ok) {
+      pendingInvitation = (await inviteRes.json()) as {
+        id: string;
+        email: string;
+        expires_at: number;
+      };
+    }
+  }
+
   return {
     ...body,
     users,
     csrfToken,
     created: url.searchParams.has("created"),
+    pendingInvitation,
   };
 };
 
 export const actions: Actions = {
-  update_limits: async ({ params, request, fetch }) => {
+  update_limits: async ({ params, request, platform }) => {
     const data = await request.formData();
     const csrf = data.get("_csrf")?.toString() ?? "";
+
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "Content-Type": "application/json",
+      "x-csrf-token": csrf,
+    };
 
     const body = {
       admin_seat_limit: Number(data.get("admin_seat_limit")),
@@ -96,19 +127,24 @@ export const actions: Actions = {
       daily_email_limit: Number(data.get("daily_email_limit")),
     };
 
-    const res = await fetch(`/api/super/tenants/${params.id}/limits`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-csrf-token": csrf },
-      body: JSON.stringify(body),
-    });
+    const apiUrl = `https://internal/api/super/tenants/${params.id}/limits`;
+    const res = await platform.env.API.fetch(
+      new Request(apiUrl, { method: "PATCH", headers, body: JSON.stringify(body) }),
+    );
 
     if (!res.ok) return fail(500, { action_error: "limits_error" });
     return { success: "limits_updated" };
   },
 
-  update_storage: async ({ params, request, fetch }) => {
+  update_storage: async ({ params, request, platform }) => {
     const data = await request.formData();
     const csrf = data.get("_csrf")?.toString() ?? "";
+
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "Content-Type": "application/json",
+      "x-csrf-token": csrf,
+    };
 
     const storageMb = Number(data.get("storage_limit_mb") ?? 0);
     const storageBytes = storageMb * 1024 * 1024;
@@ -117,102 +153,158 @@ export const actions: Actions = {
       storage_limit_bytes: storageBytes,
     };
 
-    const res = await fetch(`/api/super/tenants/${params.id}/limits`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-csrf-token": csrf },
-      body: JSON.stringify(body),
-    });
+    const apiUrl = `https://internal/api/super/tenants/${params.id}/limits`;
+    const res = await platform.env.API.fetch(
+      new Request(apiUrl, { method: "PATCH", headers, body: JSON.stringify(body) }),
+    );
 
     if (!res.ok) return fail(500, { action_error: "storage_error" });
     return { success: "storage_updated" };
   },
 
-  activate: async ({ params, request, fetch }) => {
+  activate: async ({ params, request, platform }) => {
     const data = await request.formData();
     const csrf = data.get("_csrf")?.toString() ?? "";
-    await fetch(`/api/super/tenants/${params.id}/activate`, {
-      method: "POST",
-      headers: { "x-csrf-token": csrf },
-    });
+
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "x-csrf-token": csrf,
+    };
+
+    const apiUrl = `https://internal/api/super/tenants/${params.id}/activate`;
+    await platform.env.API.fetch(new Request(apiUrl, { method: "POST", headers }));
     return { success: "activated" };
   },
 
-  deactivate: async ({ params, request, fetch }) => {
+  deactivate: async ({ params, request, platform }) => {
     const data = await request.formData();
     const csrf = data.get("_csrf")?.toString() ?? "";
-    await fetch(`/api/super/tenants/${params.id}/deactivate`, {
-      method: "POST",
-      headers: { "x-csrf-token": csrf },
-    });
+
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "x-csrf-token": csrf,
+    };
+
+    const apiUrl = `https://internal/api/super/tenants/${params.id}/deactivate`;
+    await platform.env.API.fetch(new Request(apiUrl, { method: "POST", headers }));
     return { success: "deactivated" };
   },
 
-  soft_delete: async ({ params, request, fetch }) => {
+  soft_delete: async ({ params, request, platform }) => {
     const data = await request.formData();
     const csrf = data.get("_csrf")?.toString() ?? "";
-    const res = await fetch(`/api/super/tenants/${params.id}/soft-delete`, {
-      method: "POST",
-      headers: { "x-csrf-token": csrf },
-    });
+
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "x-csrf-token": csrf,
+    };
+
+    const apiUrl = `https://internal/api/super/tenants/${params.id}/soft-delete`;
+    const res = await platform.env.API.fetch(new Request(apiUrl, { method: "POST", headers }));
     if (!res.ok) return fail(500, { action_error: "delete_error" });
-    // Redirecionar para a lista genérica após "desactivar" apagando logicamente a empresa
     redirect(303, "/super/tenants");
   },
 
-  hard_delete: async ({ params, request, fetch }) => {
+  hard_delete: async ({ params, request, platform }) => {
     const data = await request.formData();
     const csrf = data.get("_csrf")?.toString() ?? "";
-    const res = await fetch(`/api/super/tenants/${params.id}`, {
-      method: "DELETE",
-      headers: { "x-csrf-token": csrf },
-    });
+
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "x-csrf-token": csrf,
+    };
+
+    const apiUrl = `https://internal/api/super/tenants/${params.id}`;
+    const res = await platform.env.API.fetch(new Request(apiUrl, { method: "DELETE", headers }));
     if (!res.ok) return fail(500, { action_error: "delete_error" });
-    // Redirecionar para a lista de empresas após apagar
     redirect(303, "/super/tenants");
   },
 
-  elevate: async ({ params, request, fetch }) => {
+  elevate: async ({ params, request, platform }) => {
     const data = await request.formData();
     const csrf = data.get("_csrf")?.toString() ?? "";
+
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "Content-Type": "application/json",
+      "x-csrf-token": csrf,
+    };
+
     const user_id = data.get("user_id")?.toString() ?? "";
     const duration = Number(data.get("duration_hours") ?? 24) * 3600;
 
-    const res = await fetch(`/api/super/tenants/${params.id}/elevate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-csrf-token": csrf },
-      body: JSON.stringify({ user_id, duration_seconds: duration }),
-    });
+    const apiUrl = `https://internal/api/super/tenants/${params.id}/elevate`;
+    const res = await platform.env.API.fetch(
+      new Request(apiUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ user_id, duration_seconds: duration }),
+      }),
+    );
 
     if (!res.ok) return fail(500, { action_error: "elevate_error" });
     return { success: "elevated" };
   },
 
-  revoke_elevation: async ({ params, request, fetch }) => {
+  revoke_elevation: async ({ params, request, platform }) => {
     const data = await request.formData();
     const csrf = data.get("_csrf")?.toString() ?? "";
+
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "x-csrf-token": csrf,
+    };
+
     const user_id = data.get("user_id")?.toString() ?? "";
 
-    const res = await fetch(`/api/super/tenants/${params.id}/elevate?user_id=${user_id}`, {
-      method: "DELETE",
-      headers: { "x-csrf-token": csrf },
-    });
+    const apiUrl = `https://internal/api/super/tenants/${params.id}/elevate?user_id=${user_id}`;
+    const res = await platform.env.API.fetch(new Request(apiUrl, { method: "DELETE", headers }));
 
     if (!res.ok) return fail(500, { action_error: "revoke_error" });
     return { success: "elevation_revoked" };
   },
 
-  transfer_ownership: async ({ params, request, fetch }) => {
+  transfer_ownership: async ({ params, request, platform }) => {
     const data = await request.formData();
     const csrf = data.get("_csrf")?.toString() ?? "";
+
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "Content-Type": "application/json",
+      "x-csrf-token": csrf,
+    };
+
     const new_owner_id = data.get("new_owner_id")?.toString() ?? "";
 
-    const res = await fetch(`/api/super/tenants/${params.id}/transfer-ownership`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-csrf-token": csrf },
-      body: JSON.stringify({ new_owner_user_id: new_owner_id }),
-    });
+    const apiUrl = `https://internal/api/super/tenants/${params.id}/transfer-ownership`;
+    const res = await platform.env.API.fetch(
+      new Request(apiUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ new_owner_user_id: new_owner_id }),
+      }),
+    );
 
     if (!res.ok) return fail(500, { action_error: "transfer_error" });
     return { success: "ownership_transferred" };
+  },
+
+  resend_invitation: async ({ params, request, platform }) => {
+    const data = await request.formData();
+    const csrf = data.get("_csrf")?.toString() ?? "";
+
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "x-csrf-token": csrf,
+    };
+
+    const apiUrl = `https://internal/api/super/tenants/${params.id}/resend-invitation`;
+    const res = await platform.env.API.fetch(new Request(apiUrl, { method: "POST", headers }));
+
+    if (!res.ok) {
+      const error = (await res.json()) as { message?: string };
+      return fail(500, { action_error: error.message || "resend_error" });
+    }
+    return { success: "invitation_resent" };
   },
 };

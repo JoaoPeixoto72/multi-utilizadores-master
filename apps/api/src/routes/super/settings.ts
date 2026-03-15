@@ -19,7 +19,9 @@ import { logAuditEvent } from "../../services/audit-log.service.js";
 
 export const superSettingsRouter = new Hono<{ Bindings: Env }>();
 
-superSettingsRouter.use("/settings/*", requireSuperUser);
+// Only require super user for PATCH (writing), not GET (reading)
+// The branding colors need to be visible to all users
+superSettingsRouter.patch("/settings/config", requireSuperUser);
 
 // Schema de validação flexível para configurações
 const updateConfigSchema = z.record(z.string(), z.string());
@@ -38,36 +40,41 @@ superSettingsRouter.get("/settings/config", async (c) => {
 });
 
 // ── PATCH /api/super/settings/config ───────────────────────────────────────────
-superSettingsRouter.patch("/settings/config", zValidator("json", updateConfigSchema), async (c) => {
-  const log = createLogger("super/settings", getTraceId(c.req.raw));
-  const user = c.get("user" as never) as { id: string };
+superSettingsRouter.patch(
+  "/settings/config",
+  requireSuperUser,
+  zValidator("json", updateConfigSchema),
+  async (c) => {
+    const log = createLogger("super/settings", getTraceId(c.req.raw));
+    const user = c.get("user" as never) as { id: string };
 
-  const entries = c.req.valid("json");
+    const entries = c.req.valid("json");
 
-  // Prevent empty updates
-  if (Object.keys(entries).length === 0) {
-    return c.json({ ok: true });
-  }
+    // Prevent empty updates
+    if (Object.keys(entries).length === 0) {
+      return c.json({ ok: true });
+    }
 
-  try {
-    await setManyAppConfig(c.env.DB, entries);
+    try {
+      await setManyAppConfig(c.env.DB, entries);
 
-    // Audit log
-    const keysUpdated = Object.keys(entries);
-    await logAuditEvent(c.env.DB, {
-      event_type: "app_config.updated",
-      actor_id: user.id,
-      target_type: "app_config",
-      target_id: "global",
-      metadata: { keys: keysUpdated },
-      count_affected: keysUpdated.length,
-    });
+      // Audit log
+      const keysUpdated = Object.keys(entries);
+      await logAuditEvent(c.env.DB, {
+        event_type: "app_config.updated",
+        actor_id: user.id,
+        target_type: "app_config",
+        target_id: "global",
+        metadata: { keys: keysUpdated },
+        count_affected: keysUpdated.length,
+      });
 
-    log.info({ actor_id: user.id, keys: keysUpdated }, "app_config_updated");
+      log.info({ actor_id: user.id, keys: keysUpdated }, "app_config_updated");
 
-    return c.json({ ok: true, keys_updated: keysUpdated.length });
-  } catch (err) {
-    log.error({ err }, "update app_config failed");
-    return problemResponse(c, 500, "INTERNAL_ERROR", "Erro ao atualizar configurações");
-  }
-});
+      return c.json({ ok: true, keys_updated: keysUpdated.length });
+    } catch (err) {
+      log.error({ err }, "update app_config failed");
+      return problemResponse(c, 500, "INTERNAL_ERROR", "Erro ao atualizar configurações");
+    }
+  },
+);

@@ -113,8 +113,36 @@
     <Alert variant="success">{m.super_tenant_ownership_transferred()}</Alert>
   {:else if form?.success === "soft_deleted"}
     <Alert variant="success">{m.super_tenant_soft_deleted()}</Alert>
+  {:else if form?.success === "invitation_resent"}
+    <Alert variant="success">{m.team_invitation_resend()}</Alert>
   {:else if form?.action_error}
     <Alert variant="error">{m.error_generic_description()}</Alert>
+  {/if}
+
+  <!-- Invitation info for pending tenants -->
+  {#if data.tenant.status === "pending" && data.pendingInvitation}
+    <Alert variant="info">
+      <div class="invitation-info">
+        <p><strong>{m.team_invitation_status_pending()}:</strong> {data.pendingInvitation.email}</p>
+        <p>{m.team_invitation_expires()}: {new Date(data.pendingInvitation.expires_at * 1000).toLocaleDateString()}</p>
+        <form
+          method="POST"
+          action="?/resend_invitation"
+          use:enhance={() => {
+            loadingAction = "resend";
+            return async ({ update }) => {
+              loadingAction = null;
+              await update();
+            };
+          }}
+        >
+          <input type="hidden" name="_csrf" value={data.csrfToken ?? ""} />
+          <Button type="submit" variant="primary" size="sm" disabled={!!loadingAction}>
+            {m.team_invitation_resend()}
+          </Button>
+        </form>
+      </div>
+    </Alert>
   {/if}
 
   <div class="grid-2">
@@ -402,6 +430,8 @@
               {m.super_tenant_deactivate()}
             </Button>
           </form>
+        {:else if data.tenant.status === "pending"}
+          <p class="text-muted">{m.super_tenants_pending()}</p>
         {/if}
       </div>
     </div>

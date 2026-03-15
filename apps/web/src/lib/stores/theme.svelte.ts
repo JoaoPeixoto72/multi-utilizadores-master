@@ -58,6 +58,7 @@ function setCookie(name: string, value: string): void {
   if (typeof document === "undefined") return;
   // 1 ano; SameSite=Lax; path=/
   const maxAge = 60 * 60 * 24 * 365;
+  // biome-ignore lint/suspicious/noDocumentCookie: sync cookie for theme preferences; Cookie Store API is async and not universally supported
   document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${maxAge}; path=/; SameSite=Lax`;
 }
 

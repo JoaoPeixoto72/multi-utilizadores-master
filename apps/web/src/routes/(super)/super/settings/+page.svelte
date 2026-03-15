@@ -256,7 +256,25 @@
   ];
 
   function applyPreset(preset: (typeof rapidPresets)[0]) {
-    Object.assign(config, preset.colors);
+    // Update each color property individually to ensure reactivity
+    for (const [key, value] of Object.entries(preset.colors)) {
+      (config as any)[key] = value;
+    }
+    // Map preset to base palette for theme cookie
+    const presetToPalette: Record<string, Palette> = {
+      original: "indigo",
+      modern: "indigo",
+      vibrant: "rose",
+      soft: "indigo",
+      dark: "indigo",
+      midnight: "indigo",
+      nature: "emerald",
+      corporate: "indigo",
+    };
+    const basePalette = presetToPalette[preset.id] || "indigo";
+    config.ui_theme_palette = basePalette;
+    // Apply immediately to themeStore for instant preview
+    themeStore.setPalette(basePalette);
   }
 </script>
 

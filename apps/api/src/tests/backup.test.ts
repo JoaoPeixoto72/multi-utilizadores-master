@@ -214,7 +214,7 @@ describe("generateBackup", () => {
     let firstCallCount = 0;
     db._stmt.first.mockImplementation(() => {
       firstCallCount++;
-      if (firstCallCount >= 3) {
+      if (firstCallCount >= 1) {
         // retorna a linha final
         return Promise.resolve({
           id: "backup-uuid",

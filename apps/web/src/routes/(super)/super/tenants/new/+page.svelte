@@ -159,7 +159,7 @@
               id="daily_email_limit"
               type="number"
               name="daily_email_limit"
-              value="1000"
+              value="100"
               min={1}
               max={10000}
               disabled={loading}

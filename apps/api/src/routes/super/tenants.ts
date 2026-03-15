@@ -33,6 +33,7 @@ import { problemResponse } from "../../lib/problem.js";
 import { authMiddleware, requireSuperUser } from "../../middleware/auth.js";
 import { logAuditEvent } from "../../services/audit-log.service.js";
 import { sendEmail } from "../../services/integration.service.js";
+import { resendInvitation } from "../../services/invitation.service.js";
 import { NOTIFICATION_TYPES, notifyOwners } from "../../services/notification.service.js";
 import {
   activateTenant,
@@ -215,21 +216,42 @@ superTenantsRouter.post("/tenants", zValidator("json", CreateTenantSchema), asyn
 // ── GET /api/super/tenants/:id ─────────────────────────────────────────────────
 superTenantsRouter.get("/tenants/:id", async (c) => {
   const tenantId = c.req.param("id");
-  let tenant = await getTenantById(c.env.DB, tenantId);
+  const log = createLogger("super.tenants.detail", getTraceId(c.req.raw));
 
-  if (!tenant) return problemResponse(c, 404, "Not Found", "Empresa não encontrada");
+  log.info({ tenantId }, "Fetching tenant detail");
+
+  // First just try to get the tenant directly without auto-recover
+  const tenant = await getTenantById(c.env.DB, tenantId);
+
+  log.info({ tenantId, found: !!tenant, tenantStatus: tenant?.status }, "Tenant lookup result");
+
+  if (!tenant) {
+    log.error({ tenantId }, "Tenant not found in database");
+    return problemResponse(c, 404, "Not Found", "Empresa não encontrada");
+  }
+
+  // Auto-recover: activar tenants pendentes que já têm owner registado
+  if (tenant.status === "pending") {
+    await c.env.DB.prepare(
+      `UPDATE tenants SET status = 'active', updated_at = unixepoch()
+       WHERE status = 'pending'
+         AND deleted_at IS NULL
+         AND id = ?1
+         AND id IN (
+           SELECT tenant_id FROM users
+           WHERE is_owner = 1 AND status != 'deleted'
+         )`,
+    )
+      .bind(tenantId)
+      .run()
+      .catch(() => {});
+  }
 
   const [owner, seats, storageUsed] = await Promise.all([
     getTenantOwner(c.env.DB, tenantId),
     countUsersByTenant(c.env.DB, tenantId),
     getStorageUsage(c.env.DB, tenantId),
   ]);
-
-  // Auto-recover: se tenant está 'pending' mas já tem owner activo, activar
-  if (tenant.status === "pending" && owner) {
-    await activateTenant(c.env.DB, tenantId).catch(() => {});
-    tenant = { ...tenant, status: "active" };
-  }
 
   return c.json({ tenant, owner, seats, storage_used: storageUsed });
 });
@@ -489,6 +511,94 @@ superTenantsRouter.patch("/settings", zValidator("json", SettingsSchema), async 
   await setManyAppConfig(c.env.DB, body);
   log.info({ keys: Object.keys(body) }, "settings_updated");
   return c.json({ ok: true });
+});
+
+// ── GET /api/super/tenants/:id/invitation ──────────────────────────────────────
+superTenantsRouter.get("/tenants/:id/invitation", async (c) => {
+  const tenantId = c.req.param("id");
+
+  const tenant = await getTenantById(c.env.DB, tenantId);
+  if (!tenant) return problemResponse(c, 404, "Not Found", "Empresa não encontrada");
+
+  // Só retornar convite para tenants pending
+  if (tenant.status !== "pending") {
+    return problemResponse(
+      c,
+      400,
+      "Bad Request",
+      "Só existem convites pendentes para empresas pendentes.",
+    );
+  }
+
+  // Encontrar o convite pendente do owner
+  const pendingInvitation = await c.env.DB.prepare(
+    `SELECT id, email, expires_at FROM invitations 
+     WHERE tenant_id = ?1 AND is_owner = 1 AND status = 'pending'`,
+  )
+    .bind(tenantId)
+    .first<{ id: string; email: string; expires_at: number }>();
+
+  if (!pendingInvitation) {
+    return problemResponse(c, 404, "Not Found", "Convite pendente não encontrado");
+  }
+
+  return c.json(pendingInvitation);
+});
+
+// ── POST /api/super/tenants/:id/resend-invitation ───────────────────────────────
+superTenantsRouter.post("/tenants/:id/resend-invitation", async (c) => {
+  const log = createLogger("super.tenants.resend_invitation", getTraceId(c.req.raw));
+  const tenantId = c.req.param("id");
+  const actor = c.get("user");
+
+  const tenant = await getTenantById(c.env.DB, tenantId);
+  if (!tenant) return problemResponse(c, 404, "Not Found", "Empresa não encontrada");
+
+  // Só permitir reenviar convites para tenants pending
+  if (tenant.status !== "pending") {
+    return problemResponse(
+      c,
+      400,
+      "Bad Request",
+      "Só é possível reenviar convites para empresas pendentes.",
+    );
+  }
+
+  // Encontrar o convite pendente do owner
+  const pendingInvitation = await c.env.DB.prepare(
+    `SELECT id FROM invitations 
+     WHERE tenant_id = ?1 AND is_owner = 1 AND status = 'pending'`,
+  )
+    .bind(tenantId)
+    .first<{ id: string }>();
+
+  if (!pendingInvitation) {
+    return problemResponse(c, 404, "Not Found", "Convite pendente não encontrado");
+  }
+
+  try {
+    // Reenviar o convite (cancela o anterior e cria um novo)
+    const result = await resendInvitation(c.env.DB, pendingInvitation.id, tenantId);
+    log.info({ tenantId, invitationId: result.invitation.id }, "invitation_resent");
+
+    await logAuditEvent(c.env.DB, {
+      event_type: "tenant.invitation_resent",
+      actor_id: actor.id,
+      target_type: "tenant",
+      target_id: tenantId,
+      tenant_id: tenantId,
+      metadata: { email: result.invitation.email },
+    });
+
+    return c.json({ invitation: result.invitation, token: result.rawToken });
+  } catch (err: unknown) {
+    const e = err as { code?: string; message?: string };
+    if (e.code === "not_found") {
+      return problemResponse(c, 404, "Not Found", "Convite não encontrado");
+    }
+    log.error({ err }, "resend_invitation_error");
+    return problemResponse(c, 500, "Internal Server Error", "Failed to resend invitation");
+  }
 });
 
 export { superTenantsRouter };

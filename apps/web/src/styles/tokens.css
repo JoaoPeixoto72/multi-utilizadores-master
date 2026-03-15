@@ -99,6 +99,10 @@
   --color-black: #000000;
   --color-danger: #dc2626;
   --color-primary: #3b82f6;
+  --color-primary-light: #eff6ff;
+  --color-secondary: #64748b;
+  --color-warning: #f59e0b;
+  --color-link: #3b82f6;
 
   /* ── Bordas semânticas extra ── */
   --border-danger: #fca5a5;
@@ -156,6 +160,9 @@
 
   /* ── Cores semânticas (DARK) ── */
   --color-danger: #f87171;
+  --color-secondary: #94a3b8;
+  --color-warning: #fbbf24;
+  --color-link: #60a5fa;
 }
 
 /* ============================================================

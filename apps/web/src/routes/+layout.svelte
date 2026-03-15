@@ -22,10 +22,20 @@
 
   let { data, children }: Props = $props();
 
+  // Initialize theme store on mount
+  import { onMount } from "svelte";
+  onMount(() => {
+    themeStore.init();
+  });
+
   // Defaults: SIDEBAR / LIGHT / palette-indigo
-  const layout = $derived(data.layout ?? "sidebar");
-  const theme = $derived(data.theme ?? "light");
-  const palette = $derived(data.palette ?? "indigo");
+  // Use themeStore values for theme/palette/layout to ensure consistency
+  // between client-side changes and server-side initial values
+  import { themeStore } from "$lib/stores/theme.svelte.js";
+  
+  const layout = $derived(themeStore.layout ?? data.layout ?? "sidebar");
+  const theme = $derived(themeStore.theme ?? data.theme ?? "light");
+  const palette = $derived(themeStore.palette ?? data.palette ?? "indigo");
   const radius = $derived(data.radius ?? "lg");
   const fontId = $derived(data.fontFamily ?? "inter");
   const fontObj = $derived(
@@ -39,143 +49,48 @@
   const buttonBgColor = $derived(data.buttonBgColor ?? "");
   const buttonTextColor = $derived(data.buttonTextColor ?? "");
 
+  // Extract custom colors from appConfig
+  const appConfig = $derived(data.appConfig ?? {});
+  const colorPrimary = $derived(appConfig.ui_color_primary ?? "");
+  const colorSecondary = $derived(appConfig.ui_color_secondary ?? "");
+  const colorBackground = $derived(appConfig.ui_color_background ?? "");
+  const colorSurface = $derived(appConfig.ui_color_surface ?? "");
+  const colorActionBtn = $derived(appConfig.ui_color_action_btn ?? "");
+  const colorActionText = $derived(appConfig.ui_color_action_text ?? "");
+  const colorWarning = $derived(appConfig.ui_color_warning ?? "");
+  const colorDanger = $derived(appConfig.ui_color_danger ?? "");
+  const colorLink = $derived(appConfig.ui_color_link ?? "");
+
   // Aplicar atributos no <body> via $effect (Svelte 5 — svelte:body não suporta data-*)
+  // Aplicamos as classes de tema e layout E as cores customizadas do appConfig
   $effect(() => {
     if (!browser) return;
-    document.body.setAttribute("data-layout", layout);
-    document.body.setAttribute("data-theme", theme);
+    // Only set attributes if themeStore is initialized (has non-default values)
+    // or if we're using the data values (initial render)
+    const currentLayout = themeStore.layout || layout;
+    const currentTheme = themeStore.theme || theme;
+    const currentPalette = themeStore.palette || palette;
+    
+    document.body.setAttribute("data-layout", currentLayout);
+    document.body.setAttribute("data-theme", currentTheme);
     // Remover classes de paleta anteriores e adicionar a nova
     const classList = document.body.classList;
     for (const cls of Array.from(classList)) {
       if (cls.startsWith("palette-")) classList.remove(cls);
     }
-    classList.add(`palette-${palette}`);
+    classList.add(`palette-${currentPalette}`);
 
-    // Aplicar a Global Font ao CSS :root
-    document.documentElement.style.setProperty("--font-sans", fontObj.family);
-
-    // Aplicar substituição de bordas
-    if (!borderActive) {
-      document.documentElement.style.setProperty(
-        "--border-input",
-        "var(--bg-input)",
-      );
-      document.documentElement.style.setProperty(
-        "--border-input-hover",
-        "var(--bg-hover)",
-      );
-    } else {
-      if (borderColor) {
-        document.documentElement.style.setProperty(
-          "--border-input",
-          borderColor,
-        );
-        document.documentElement.style.setProperty(
-          "--border-input-hover",
-          borderColor,
-        );
-      } else {
-        document.documentElement.style.removeProperty("--border-input");
-        document.documentElement.style.removeProperty("--border-input-hover");
-      }
-    }
-
-    // Input text block spacing and background colors
-    if (inputBgColor) {
-      document.documentElement.style.setProperty("--bg-input", inputBgColor);
-    } else {
-      document.documentElement.style.removeProperty("--bg-input");
-    }
-
-    if (inputPadding) {
-      document.documentElement.style.setProperty("--space-4", inputPadding); // ui/Input.svelte base padding
-    } else {
-      document.documentElement.style.removeProperty("--space-4");
-    }
-
-    // Button custom variables
-    const btnRadiusMap: Record<string, string> = {
-      sm: "var(--radius-sm, 4px)",
-      md: "var(--radius-md, 8px)",
-      lg: "var(--radius-lg, 12px)",
-      full: "9999px",
-    };
-
-    document.documentElement.style.setProperty(
-      "--radius-btn",
-      btnRadiusMap[buttonRadius] || "9999px",
-    );
-
-    // Mapeamento Dinamico de Cores Curadas da UI
-    const appConfig = data.appConfig || {};
-    const colorVars: Record<string, string[]> = {
-      ui_color_primary: ["--brand-500", "--bg-selected", "--badge-brand-bg"],
-      ui_color_secondary: [
-        "--bg-surface-subtle",
-        "--bg-hover",
-        "--border-subtle",
-      ],
-      ui_color_background: ["--bg-page"],
-      ui_color_surface: ["--bg-surface"],
-      ui_color_action_btn: ["--btn-action-bg"],
-      ui_color_action_text: ["--btn-action-text"],
-      ui_color_warning: [
-        "--status-pending-text",
-        "--badge-warning-text",
-        "--badge-warning-bg",
-        "--status-pending-dot",
-      ],
-      ui_color_danger: [
-        "--color-danger",
-        "--status-error-text",
-        "--badge-error-bg",
-        "--status-inactive-text",
-        "--status-inactive-dot",
-      ],
-      ui_color_link: ["--text-link"],
-    };
-
-    for (const [key, cssVars] of Object.entries(colorVars)) {
-      const val = appConfig[key];
-      if (val) {
-        for (const cssVar of cssVars) {
-          document.documentElement.style.setProperty(cssVar, val);
-        }
-      } else {
-        for (const cssVar of cssVars) {
-          document.documentElement.style.removeProperty(cssVar);
-        }
-      }
-    }
-
-    // Injetar variável CSS para o radius root dinâmico (com fallback para tokens)
-    // Isto permiterá que modifiquemos o raio de todos os elementos.
-    // Como tokens.css dita a variável principal localmente, reescrevemos o estilo em inline ou classes
-    const radiusMap: Record<string, string> = {
-      sm: "6px",
-      md: "8px",
-      lg: "12px",
-      full: "9999px",
-    };
-    const val = radiusMap[radius] || "12px";
-
-    // Reescrever variáveis no ROOT para propagar em cascata
-    document.documentElement.style.setProperty(
-      "--radius-sm",
-      radius === "sm" ? "4px" : radius === "full" ? "9999px" : "6px",
-    );
-    document.documentElement.style.setProperty(
-      "--radius-md",
-      radius === "full" ? "9999px" : val,
-    );
-    document.documentElement.style.setProperty(
-      "--radius-lg",
-      radius === "full" ? "9999px" : val,
-    );
-    document.documentElement.style.setProperty(
-      "--radius-xl",
-      radius === "full" ? "9999px" : "16px",
-    );
+    // Apply custom branding colors from appConfig
+    const root = document.documentElement;
+    if (colorPrimary) root.style.setProperty("--color-primary", colorPrimary);
+    if (colorSecondary) root.style.setProperty("--color-secondary", colorSecondary);
+    if (colorBackground) root.style.setProperty("--bg-page", colorBackground);
+    if (colorSurface) root.style.setProperty("--bg-surface", colorSurface);
+    if (colorActionBtn) root.style.setProperty("--btn-action-bg", colorActionBtn);
+    if (colorActionText) root.style.setProperty("--btn-action-text", colorActionText);
+    if (colorWarning) root.style.setProperty("--color-warning", colorWarning);
+    if (colorDanger) root.style.setProperty("--color-danger", colorDanger);
+    if (colorLink) root.style.setProperty("--color-link", colorLink);
   });
 </script>
 
