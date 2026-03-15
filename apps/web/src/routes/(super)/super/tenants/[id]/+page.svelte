@@ -241,7 +241,7 @@
           loadingAction = "limits";
           return async ({ update }) => {
             loadingAction = null;
-            await update();
+            await update({ invalidateAll: true });
           };
         }}
       >
@@ -357,7 +357,7 @@
             loadingAction = "storage";
             return async ({ update }) => {
               loadingAction = null;
-              await update();
+              await update({ invalidateAll: true });
             };
           }}
         >

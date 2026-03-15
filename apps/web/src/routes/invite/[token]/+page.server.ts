@@ -15,11 +15,15 @@ interface InviteData {
   expires_at: number;
 }
 
-export const load: PageServerLoad = async ({ params, fetch, parent }) => {
-  // Obter CSRF token do layout root
+export const load: PageServerLoad = async ({ params, parent, request, platform }) => {
   const { csrfToken } = await parent();
 
-  const res = await fetch(`/api/invitations/${params.token}`);
+  const headers = {
+    cookie: request.headers.get("cookie") ?? "",
+  };
+
+  const apiUrl = `https://internal/api/invitations/${params.token}`;
+  const res = await platform.env.API.fetch(new Request(apiUrl, { headers }));
 
   if (res.status === 404) {
     error(404, "Convite inválido ou expirado");
@@ -34,7 +38,7 @@ export const load: PageServerLoad = async ({ params, fetch, parent }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ params, request, fetch }) => {
+  default: async ({ params, request, platform }) => {
     const data = await request.formData();
     const password = data.get("password")?.toString() ?? "";
     const display_name = data.get("display_name")?.toString() ?? "";
@@ -44,14 +48,20 @@ export const actions: Actions = {
       return fail(422, { error: "validation" });
     }
 
-    const res = await fetch(`/api/invitations/${params.token}/accept`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-csrf-token": csrf,
-      },
-      body: JSON.stringify({ password, display_name: display_name || undefined }),
-    });
+    const headers = {
+      cookie: request.headers.get("cookie") ?? "",
+      "Content-Type": "application/json",
+      "x-csrf-token": csrf,
+    };
+
+    const apiUrl = `https://internal/api/invitations/${params.token}/accept`;
+    const res = await platform.env.API.fetch(
+      new Request(apiUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ password, display_name: display_name || undefined }),
+      }),
+    );
 
     if (res.status === 404) {
       return fail(404, { error: "invalid_token" });
