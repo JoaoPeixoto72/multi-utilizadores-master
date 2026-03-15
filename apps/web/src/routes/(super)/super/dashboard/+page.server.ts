@@ -23,20 +23,22 @@ interface TenantsResponse {
   meta: StatsResponse;
 }
 
-export const load: PageServerLoad = async ({ platform, cookies }) => {
+export const load: PageServerLoad = async ({ platform, request }) => {
+  const cookiesHeader = request.headers.get("cookie") ?? "";
+
   // Buscar stats + recentes (todos os status)
   const [allRes, activeRes] = await Promise.all([
     platform.env.API.fetch(
       new Request(`https://internal/api/super/tenants?limit=5`, {
         headers: {
-          cookie: cookies.toString(),
+          cookie: cookiesHeader,
         },
       }),
     ),
     platform.env.API.fetch(
       new Request(`https://internal/api/super/tenants?limit=5&status=active`, {
         headers: {
-          cookie: cookies.toString(),
+          cookie: cookiesHeader,
         },
       }),
     ),

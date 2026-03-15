@@ -18,11 +18,12 @@ interface Integration {
   updated_at: string;
 }
 
-export const load: PageServerLoad = async ({ platform, cookies }) => {
+export const load: PageServerLoad = async ({ platform, request }) => {
+  const cookiesHeader = request.headers.get("cookie") ?? "";
   const res = await platform.env.API.fetch(
     new Request(`https://internal/api/super/integrations`, {
       headers: {
-        cookie: cookies.toString(),
+        cookie: cookiesHeader,
       },
     }),
   );
@@ -34,12 +35,12 @@ export const load: PageServerLoad = async ({ platform, cookies }) => {
 };
 
 /** Obtém CSRF token para usar nas chamadas fetch internas */
-async function getCsrf(platform: any, cookies: { toString: () => string }): Promise<string> {
+async function getCsrf(platform: any, cookiesHeader: string): Promise<string> {
   try {
     const r = await platform.env.API.fetch(
       new Request(`https://internal/api/auth/csrf`, {
         headers: {
-          cookie: cookies.toString(),
+          cookie: cookiesHeader,
         },
       }),
     );
@@ -58,7 +59,8 @@ async function getCsrf(platform: any, cookies: { toString: () => string }): Prom
 }
 
 export const actions: Actions = {
-  create: async ({ platform, request, cookies }) => {
+  create: async ({ platform, request }) => {
+    const cookiesHeader = request.headers.get("cookie") ?? "";
     const form = await request.formData();
     const category    = form.get("category") as string;
     const provider    = form.get("provider") as string;
@@ -82,11 +84,11 @@ export const actions: Actions = {
       return { error: "Credenciais inválidas (JSON mal formatado)." };
     }
 
-    const csrf = await getCsrf(platform, cookies);
+    const csrf = await getCsrf(platform, cookiesHeader);
     const res = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-csrf-token": csrf },
+        headers: { "Content-Type": "application/json", "x-csrf-token": csrf, cookie: cookiesHeader },
         body: JSON.stringify({ category, provider, credentials }),
       }),
     );
@@ -104,7 +106,8 @@ export const actions: Actions = {
     return { success: true };
   },
 
-  verify: async ({ platform, request, cookies }) => {
+  verify: async ({ platform, request }) => {
+    const cookiesHeader = request.headers.get("cookie") ?? "";
     /** Testa a integração e envia um email de confirmação real */
     const form  = await request.formData();
     const id    = form.get("id") as string;
@@ -114,13 +117,13 @@ export const actions: Actions = {
       return { verifyError: "Indique um email válido para receber o email de teste." };
     }
 
-    const csrf = await getCsrf(platform, cookies);
+    const csrf = await getCsrf(platform, cookiesHeader);
 
     // 1. Testar ping (valida API key)
     const testRes = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/${id}/test`, {
         method: "POST",
-        headers: { "x-csrf-token": csrf },
+        headers: { "x-csrf-token": csrf, cookie: cookiesHeader },
       }),
     );
     const testText = await testRes.text();
@@ -136,7 +139,7 @@ export const actions: Actions = {
     const sendRes = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/verify-email`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-csrf-token": csrf },
+        headers: { "Content-Type": "application/json", "x-csrf-token": csrf, cookie: cookiesHeader },
         body: JSON.stringify({ id, email }),
       }),
     );
@@ -152,14 +155,15 @@ export const actions: Actions = {
     return { verifySuccess: `Email de verificação enviado para ${email}. Verifique a sua caixa de entrada.` };
   },
 
-  test: async ({ platform, request, cookies }) => {
+  test: async ({ platform, request }) => {
+    const cookiesHeader = request.headers.get("cookie") ?? "";
     const form = await request.formData();
     const id   = form.get("id") as string;
-    const csrf = await getCsrf(platform, cookies);
+    const csrf = await getCsrf(platform, cookiesHeader);
     const res  = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/${id}/test`, {
         method: "POST",
-        headers: { "x-csrf-token": csrf },
+        headers: { "x-csrf-token": csrf, cookie: cookiesHeader },
       }),
     );
     const bodyText = await res.text();
@@ -169,14 +173,15 @@ export const actions: Actions = {
     return { testResult: data };
   },
 
-  activate: async ({ platform, request, cookies }) => {
+  activate: async ({ platform, request }) => {
+    const cookiesHeader = request.headers.get("cookie") ?? "";
     const form = await request.formData();
     const id   = form.get("id") as string;
-    const csrf = await getCsrf(platform, cookies);
+    const csrf = await getCsrf(platform, cookiesHeader);
     const res  = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/${id}/activate`, {
         method: "POST",
-        headers: { "x-csrf-token": csrf },
+        headers: { "x-csrf-token": csrf, cookie: cookiesHeader },
       }),
     );
     const bodyText = await res.text();
@@ -189,28 +194,30 @@ export const actions: Actions = {
     return { success: true };
   },
 
-  deactivate: async ({ platform, request, cookies }) => {
+  deactivate: async ({ platform, request }) => {
+    const cookiesHeader = request.headers.get("cookie") ?? "";
     const form = await request.formData();
     const id   = form.get("id") as string;
-    const csrf = await getCsrf(platform, cookies);
+    const csrf = await getCsrf(platform, cookiesHeader);
     const res = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/${id}/deactivate`, {
         method: "POST",
-        headers: { "x-csrf-token": csrf },
+        headers: { "x-csrf-token": csrf, cookie: cookiesHeader },
       }),
     );
     console.log("[super/integrations] deactivate response status:", res.status);
     return { success: true };
   },
 
-  delete: async ({ platform, request, cookies }) => {
+  delete: async ({ platform, request }) => {
+    const cookiesHeader = request.headers.get("cookie") ?? "";
     const form = await request.formData();
     const id   = form.get("id") as string;
-    const csrf = await getCsrf(platform, cookies);
+    const csrf = await getCsrf(platform, cookiesHeader);
     const res = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/${id}`, {
         method: "DELETE",
-        headers: { "x-csrf-token": csrf },
+        headers: { "x-csrf-token": csrf, cookie: cookiesHeader },
       }),
     );
     console.log("[super/integrations] delete response status:", res.status);

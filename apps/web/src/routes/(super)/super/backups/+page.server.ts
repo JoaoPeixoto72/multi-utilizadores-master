@@ -18,11 +18,12 @@ interface BackupItem {
   completed_at: number | null;
 }
 
-export const load: PageServerLoad = async ({ platform, cookies }) => {
+export const load: PageServerLoad = async ({ platform, request }) => {
+  const cookiesHeader = request.headers.get("cookie") ?? "";
   const res = await platform.env.API.fetch(
     new Request(`https://internal/api/super/backups`, {
       headers: {
-        cookie: cookies.toString(),
+        cookie: cookiesHeader,
       },
     }),
   );

@@ -19,7 +19,7 @@ export interface AuditItem {
   created_at: number;
 }
 
-export const load: PageServerLoad = async ({ fetch, url }) => {
+export const load: PageServerLoad = async ({ platform, url, request }) => {
   const cursor = url.searchParams.get('cursor') || undefined;
   const event_type = url.searchParams.get('event_type') || undefined;
   const tenant_id = url.searchParams.get('tenant_id') || undefined;
@@ -29,7 +29,13 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
   if (event_type) params.set('event_type', event_type);
   if (tenant_id) params.set('tenant_id', tenant_id);
 
-  const res = await fetch(`/api/super/audit?${params}`);
+  const res = await platform.env.API.fetch(
+    new Request(`https://internal/api/super/audit?${params}`, {
+      headers: {
+        cookie: request.headers.get("cookie") ?? "",
+      },
+    })
+  );
   const data = res.ok
     ? (await res.json()) as { items: AuditItem[]; nextCursor: number | null }
     : { items: [], nextCursor: null };

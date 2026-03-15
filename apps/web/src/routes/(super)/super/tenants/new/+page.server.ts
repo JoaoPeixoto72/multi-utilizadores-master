@@ -13,7 +13,8 @@ export const load: PageServerLoad = async ({ parent }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, platform, cookies }) => {
+  default: async ({ request, platform }) => {
+    const cookiesHeader = request.headers.get("cookie") ?? "";
     const data = await request.formData();
 
     const name              = data.get("name")?.toString() ?? "";
@@ -38,7 +39,7 @@ export const actions: Actions = {
         headers: {
           "Content-Type": "application/json",
           "x-csrf-token": csrf,
-          cookie: cookies.toString(),
+          cookie: cookiesHeader,
         },
         body: JSON.stringify({
           name,

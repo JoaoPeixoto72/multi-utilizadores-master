@@ -10,7 +10,8 @@
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ url, platform, cookies }) => {
+export const load: PageServerLoad = async ({ url, platform, request }) => {
+  const cookiesHeader = request.headers.get("cookie") ?? "";
   const id    = url.searchParams.get("id");
   const token = url.searchParams.get("token");
 
@@ -24,7 +25,7 @@ export const load: PageServerLoad = async ({ url, platform, cookies }) => {
     const r = await platform.env.API.fetch(
       new Request(`https://internal/api/auth/csrf`, {
         headers: {
-          cookie: cookies.toString(),
+          cookie: cookiesHeader,
         },
       }),
     );
@@ -47,7 +48,7 @@ export const load: PageServerLoad = async ({ url, platform, cookies }) => {
         method: "POST",
         headers: {
           "x-csrf-token": csrf,
-          cookie: cookies.toString(),
+          cookie: cookiesHeader,
         },
       }),
     );
@@ -63,7 +64,7 @@ export const load: PageServerLoad = async ({ url, platform, cookies }) => {
       method: "POST",
       headers: {
         "x-csrf-token": csrf,
-        cookie: cookies.toString(),
+        cookie: cookiesHeader,
       },
     }),
   );

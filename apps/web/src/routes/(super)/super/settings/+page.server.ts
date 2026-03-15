@@ -1,13 +1,14 @@
 import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
 
-export const load: PageServerLoad = async ({ platform, cookies }) => {
+export const load: PageServerLoad = async ({ platform, request }) => {
   const env = (platform as any)?.env as Record<string, string | undefined> | undefined;
+  const cookiesHeader = request.headers.get("cookie") ?? "";
 
   const res = await platform.env.API.fetch(
     new Request(`https://internal/api/super/settings/config`, {
       headers: {
-        cookie: cookies.toString(),
+        cookie: cookiesHeader,
       },
     }),
   );
@@ -45,7 +46,8 @@ export const load: PageServerLoad = async ({ platform, cookies }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, platform, cookies }) => {
+  default: async ({ request, platform }) => {
+    const cookiesHeader = request.headers.get("cookie") ?? "";
     const formData = await request.formData();
     const configData: Record<string, string> = {};
 
@@ -63,7 +65,7 @@ export const actions: Actions = {
         headers: {
           "Content-Type": "application/json",
           "x-csrf-token": csrfToken,
-          cookie: cookies.toString(),
+          cookie: cookiesHeader,
         },
         body: JSON.stringify(configData),
       }),
