@@ -82,7 +82,7 @@ export const errorHandler = async (
 
   // Sentry (opcional) — fire-and-forget, nunca bloqueia a resposta
   if (c.env.SENTRY_DSN) {
-    captureToSentry(c.env.SENTRY_DSN, err, { traceId, path: c.req.path }).catch(() => { });
+    captureToSentry(c.env.SENTRY_DSN, err, { traceId, path: c.req.path }).catch(() => {});
   }
 
   return c.json(

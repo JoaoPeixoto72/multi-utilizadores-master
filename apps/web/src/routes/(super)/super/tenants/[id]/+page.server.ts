@@ -64,7 +64,17 @@ export const load: PageServerLoad = async ({ params, fetch, url, parent }) => {
   }
 
   const body = (await res.json()) as TenantDetail;
-  const users = usersRes.ok ? (await usersRes.json()) as TenantUsers : { owner: null, tempOwners: [], members: [], collaborators: [], collaboratorCount: 0, clients: [], clientCount: 0 };
+  const users = usersRes.ok
+    ? ((await usersRes.json()) as TenantUsers)
+    : {
+        owner: null,
+        tempOwners: [],
+        members: [],
+        collaborators: [],
+        collaboratorCount: 0,
+        clients: [],
+        clientCount: 0,
+      };
 
   return {
     ...body,

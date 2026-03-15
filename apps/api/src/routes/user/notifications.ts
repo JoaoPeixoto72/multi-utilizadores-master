@@ -16,13 +16,13 @@ import { createLogger, getTraceId } from "../../lib/logger.js";
 import { problemResponse } from "../../lib/problem.js";
 import { authMiddleware } from "../../middleware/auth.js";
 import {
+  deleteAllNotifications,
+  deleteNotification,
   getUnreadCount,
   listNotifications,
   type NotificationServiceError,
   readAllNotifications,
   readNotification,
-  deleteNotification,
-  deleteAllNotifications,
 } from "../../services/notification.service.js";
 
 export const notificationsRouter = new Hono<{ Bindings: Env }>();
@@ -111,7 +111,10 @@ notificationsRouter.delete("/:id", async (c) => {
   } catch (err) {
     const e = err as NotificationServiceError;
     if (e.code && e.status) return problemResponse(c, e.status, e.message, e.code);
-    log.error({ user_id: sessionUser.id, notif_id: notifId, err: String(err) }, "notification_delete_error");
+    log.error(
+      { user_id: sessionUser.id, notif_id: notifId, err: String(err) },
+      "notification_delete_error",
+    );
     return problemResponse(c, 500, "Erro interno.", "internal_error");
   }
 });

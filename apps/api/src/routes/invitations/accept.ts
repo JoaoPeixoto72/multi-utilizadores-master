@@ -13,10 +13,10 @@ import { createUser } from "../../db/queries/users.js";
 import { hashPassword, validatePasswordPolicy } from "../../lib/auth.js";
 import { createLogger, getTraceId } from "../../lib/logger.js";
 import { problemResponse, validationErrorResponse } from "../../lib/problem.js";
+import { logAction } from "../../services/activity-log.service.js";
 import { validateInvitationToken } from "../../services/invitation.service.js";
 import { NOTIFICATION_TYPES, notifyAdmins } from "../../services/notification.service.js";
 import { activateTenant } from "../../services/tenant.service.js";
-import { logAction } from "../../services/activity-log.service.js";
 
 type Bindings = Env;
 const invitationsRouter = new Hono<{ Bindings: Bindings }>();

@@ -134,7 +134,10 @@ export const actions: Actions = {
 
     if (!res.ok) {
       const err = JSON.parse(bodyText) as { detail?: string };
-      return fail(res.status, { action: "update_profile", error: err.detail ?? "Erro ao guardar." });
+      return fail(res.status, {
+        action: "update_profile",
+        error: err.detail ?? "Erro ao guardar.",
+      });
     }
 
     return { action: "update_profile", success: true };

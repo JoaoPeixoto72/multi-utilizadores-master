@@ -268,22 +268,13 @@ export async function softDeleteTenant(db: D1Database, tenantId: string): Promis
  */
 export async function physicalDeleteTenant(db: D1Database, tenantId: string): Promise<void> {
   // Apagar utilizadores da empresa primeiro (para libertar o email UNIQUE nos users)
-  await db
-    .prepare(`DELETE FROM users WHERE tenant_id = ?1`)
-    .bind(tenantId)
-    .run();
+  await db.prepare(`DELETE FROM users WHERE tenant_id = ?1`).bind(tenantId).run();
 
   // Apagar convites pendentes associados à empresa (liberta emails de convite)
-  await db
-    .prepare(`DELETE FROM invitations WHERE tenant_id = ?1`)
-    .bind(tenantId)
-    .run();
+  await db.prepare(`DELETE FROM invitations WHERE tenant_id = ?1`).bind(tenantId).run();
 
   // Apagar a empresa (ON DELETE CASCADE trata o resto)
-  await db
-    .prepare(`DELETE FROM tenants WHERE id = ?1`)
-    .bind(tenantId)
-    .run();
+  await db.prepare(`DELETE FROM tenants WHERE id = ?1`).bind(tenantId).run();
 }
 
 export async function updateTenantOwner(

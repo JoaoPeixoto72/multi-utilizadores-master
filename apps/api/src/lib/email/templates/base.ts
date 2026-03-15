@@ -24,7 +24,7 @@ export function baseEmailHtml(opts: BaseEmailOptions): string {
     previewText = "",
     bodyHtml,
     footerText = "Recebeu este email porque tem uma conta na nossa plataforma.",
-    appName     = "CF-Base",
+    appName = "CF-Base",
     accentColor = "#18181b",
   } = opts;
 

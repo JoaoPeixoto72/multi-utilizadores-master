@@ -6,6 +6,7 @@
  * R: R09 — sem floating promises
  */
 
+import { getAppConfig } from "../db/queries/app-config.js";
 import {
   type CreateTenantInput,
   createTenant,
@@ -22,12 +23,11 @@ import {
   setTempOwner as dbSetTempOwner,
   expireStaleElevations,
   getTenantOwner,
-  getUserByIdAndTenant,
   getUserByEmail,
+  getUserByIdAndTenant,
 } from "../db/queries/users.js";
 import { initTenantModuleLimits } from "../lib/module-registry.js";
 import { createOwnerInvitation, type InvitationResult } from "./invitation.service.js";
-import { getAppConfig } from "../db/queries/app-config.js";
 
 // Tempo por defeito para owner temporário: 24h em segundos (fallback)
 const FALLBACK_TEMP_OWNER_SECONDS = 24 * 60 * 60;
@@ -185,7 +185,7 @@ export async function elevateTempOwner(
     });
   }
 
-  const ttl = durationSeconds ?? await getTempOwnerTTL(db);
+  const ttl = durationSeconds ?? (await getTempOwnerTTL(db));
   const expiresAt = Math.floor(Date.now() / 1000) + ttl;
   await dbSetTempOwner(db, userId, tenantId, expiresAt);
 }
@@ -222,10 +222,7 @@ export async function hardDeleteTenant(db: D1Database, tenantId: string): Promis
   if (users.length > 0) {
     // Apagar sessões (não há import aqui, fazemos inline)
     for (const u of users) {
-      await db
-        .prepare(`DELETE FROM sessions WHERE user_id = ?1`)
-        .bind(u.id)
-        .run();
+      await db.prepare(`DELETE FROM sessions WHERE user_id = ?1`).bind(u.id).run();
     }
   }
 

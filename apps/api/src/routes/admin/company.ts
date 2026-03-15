@@ -19,6 +19,7 @@ import { z } from "zod";
 import { createLogger, getTraceId } from "../../lib/logger.js";
 import { problemResponse } from "../../lib/problem.js";
 import { authMiddleware } from "../../middleware/auth.js";
+import { logAction } from "../../services/activity-log.service.js";
 import {
   deleteCompanyLogo,
   getCompanyProfile,
@@ -26,7 +27,6 @@ import {
   patchCompanyProfile,
   uploadCompanyLogo,
 } from "../../services/profile.service.js";
-import { logAction } from "../../services/activity-log.service.js";
 
 export const companyRouter = new Hono<{ Bindings: Env }>();
 

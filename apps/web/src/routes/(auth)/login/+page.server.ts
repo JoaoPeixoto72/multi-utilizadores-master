@@ -40,7 +40,7 @@ export const load: PageServerLoad = async ({ parent, url, platform, cookies }) =
         headers: {
           cookie: cookies.toString(),
         },
-      })
+      }),
     );
     if (res.ok) {
       const data = (await res.json()) as { available: boolean };
@@ -80,7 +80,7 @@ export const actions: Actions = {
           cookie: cookies.toString(),
         },
         body: JSON.stringify({ email, password }),
-      })
+      }),
     );
 
     if (!res.ok) {
@@ -91,7 +91,12 @@ export const actions: Actions = {
     }
 
     // Ler role da resposta ANTES de consumir o body
-    const loginData = (await res.json()) as { id: string; email: string; role: string; tenant_id: string | null };
+    const loginData = (await res.json()) as {
+      id: string;
+      email: string;
+      role: string;
+      tenant_id: string | null;
+    };
 
     // Propagar cookie de sessão definido pela API
     // IMPORTANTE: o token pode conter '=' (base64) — usar indexOf em vez de split('=')

@@ -11,7 +11,7 @@
  */
 
 import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -39,7 +39,9 @@ const missingInPt = [...enKeys].filter((k) => !ptKeys.has(k));
 let hasErrors = false;
 
 if (missingInEn.length > 0) {
-  console.error(`\n❌ [i18n] ${missingInEn.length} key(s) present in pt.json but MISSING in en.json:`);
+  console.error(
+    `\n❌ [i18n] ${missingInEn.length} key(s) present in pt.json but MISSING in en.json:`,
+  );
   for (const k of missingInEn) {
     console.error(`   - ${k}`);
   }
@@ -47,7 +49,9 @@ if (missingInEn.length > 0) {
 }
 
 if (missingInPt.length > 0) {
-  console.error(`\n❌ [i18n] ${missingInPt.length} key(s) present in en.json but MISSING in pt.json:`);
+  console.error(
+    `\n❌ [i18n] ${missingInPt.length} key(s) present in en.json but MISSING in pt.json:`,
+  );
   for (const k of missingInPt) {
     console.error(`   - ${k}`);
   }

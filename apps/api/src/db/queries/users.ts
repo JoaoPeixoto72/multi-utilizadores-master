@@ -96,7 +96,13 @@ export async function getTenantOwner(db: D1Database, tenantId: string): Promise<
 export async function countUsersByTenant(
   db: D1Database,
   tenantId: string,
-): Promise<{ admins: number; members: number; collaborators: number; clients: number; total: number }> {
+): Promise<{
+  admins: number;
+  members: number;
+  collaborators: number;
+  clients: number;
+  total: number;
+}> {
   const result = await db
     .prepare(
       `SELECT
@@ -109,7 +115,13 @@ export async function countUsersByTenant(
        WHERE tenant_id = ?1 AND status != 'deleted'`,
     )
     .bind(tenantId)
-    .first<{ admins: number; members: number; collaborators: number; clients: number; total: number }>();
+    .first<{
+      admins: number;
+      members: number;
+      collaborators: number;
+      clients: number;
+      total: number;
+    }>();
   return {
     admins: result?.admins ?? 0,
     members: result?.members ?? 0,

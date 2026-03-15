@@ -17,15 +17,15 @@ export interface SendEmailOptions {
   to: string | string[];
   subject: string;
   html: string;
-  text?: string;         // Versão plain-text (fallback)
+  text?: string; // Versão plain-text (fallback)
   replyTo?: string;
-  from?: string;         // Override do remetente (usa EMAIL_FROM se omitido)
+  from?: string; // Override do remetente (usa EMAIL_FROM se omitido)
   tags?: Array<{ name: string; value: string }>;
 }
 
 export interface SendEmailResult {
   ok: boolean;
-  id?: string;           // ID do email no Resend (para rastreio)
+  id?: string; // ID do email no Resend (para rastreio)
   error?: string;
 }
 
@@ -35,13 +35,10 @@ const RESEND_API_URL = "https://api.resend.com/emails";
  * Envia um email via Resend.
  * Em modo dry-run (sem API key ou APP_ENV !== "production"), apenas loga.
  */
-export async function sendEmail(
-  env: EmailEnv,
-  opts: SendEmailOptions,
-): Promise<SendEmailResult> {
+export async function sendEmail(env: EmailEnv, opts: SendEmailOptions): Promise<SendEmailResult> {
   const apiKey = env.RESEND_API_KEY;
   const isProd = env.APP_ENV === "production";
-  const from   = opts.from ?? env.EMAIL_FROM ?? "noreply@cf-base.dev";
+  const from = opts.from ?? env.EMAIL_FROM ?? "noreply@cf-base.dev";
 
   // Modo dry-run: sem API key em desenvolvimento
   if (!apiKey) {
@@ -51,9 +48,9 @@ export async function sendEmail(
     }
     console.log("[email:dry-run]", {
       from,
-      to:      Array.isArray(opts.to) ? opts.to : [opts.to],
+      to: Array.isArray(opts.to) ? opts.to : [opts.to],
       subject: opts.subject,
-      html:    opts.html.substring(0, 200) + "...",
+      html: opts.html.substring(0, 200) + "...",
     });
     return { ok: true, id: "dry-run-" + crypto.randomUUID() };
   }
@@ -61,18 +58,18 @@ export async function sendEmail(
   try {
     const body = {
       from,
-      to:      Array.isArray(opts.to) ? opts.to : [opts.to],
+      to: Array.isArray(opts.to) ? opts.to : [opts.to],
       subject: opts.subject,
-      html:    opts.html,
-      ...(opts.text    ? { text: opts.text }          : {}),
-      ...(opts.replyTo ? { reply_to: opts.replyTo }   : {}),
-      ...(opts.tags    ? { tags: opts.tags }           : {}),
+      html: opts.html,
+      ...(opts.text ? { text: opts.text } : {}),
+      ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
+      ...(opts.tags ? { tags: opts.tags } : {}),
     };
 
     const res = await fetch(RESEND_API_URL, {
-      method:  "POST",
+      method: "POST",
       headers: {
-        Authorization:  `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),

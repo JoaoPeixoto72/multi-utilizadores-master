@@ -6,6 +6,7 @@
  * R: R09 — sem floating promises
  */
 
+import { getAppConfig } from "../db/queries/app-config.js";
 import {
   cancelInvitation,
   createInvitation,
@@ -15,7 +16,6 @@ import {
 } from "../db/queries/invitations.js";
 import { getUserByEmail } from "../db/queries/users.js";
 import { generateOneTimeToken, hashToken } from "../lib/token.js";
-import { getAppConfig } from "../db/queries/app-config.js";
 
 // Validade do convite padrão (usada como fallback): 24 horas em segundos
 const FALLBACK_INVITATION_TTL_SECONDS = 24 * 60 * 60;

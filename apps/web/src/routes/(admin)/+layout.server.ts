@@ -81,7 +81,12 @@ export const load: LayoutServerLoad = async ({ platform, cookies }) => {
   }
 
   // Obter módulos de navegação
-  let navModules: { id: string; name_key: string; icon: string; integrations_required: string[] }[] = [];
+  let navModules: {
+    id: string;
+    name_key: string;
+    icon: string;
+    integrations_required: string[];
+  }[] = [];
   try {
     const navRes = await platform.env.API.fetch(
       new Request(`https://internal/api/user/nav`, {
@@ -94,7 +99,9 @@ export const load: LayoutServerLoad = async ({ platform, cookies }) => {
     console.log("[admin/layout] nav response status:", navRes.status);
     console.log("[admin/layout] nav response body:", navText);
     if (navRes.ok) {
-      const d = JSON.parse(navText) as { items: { id: string; name_key: string; icon: string; integrations_required: string[] }[] };
+      const d = JSON.parse(navText) as {
+        items: { id: string; name_key: string; icon: string; integrations_required: string[] }[];
+      };
       navModules = d.items ?? [];
     }
   } catch (e) {

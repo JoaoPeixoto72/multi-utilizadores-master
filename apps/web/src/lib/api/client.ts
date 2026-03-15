@@ -7,4 +7,3 @@ export type ApiClient = {
 export const api: ApiClient = {
   base: apiBase,
 };
-

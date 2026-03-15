@@ -22,7 +22,6 @@ export const AVATAR_MAX_BYTES = FALLBACK_MAX_BYTES;
 export const AVATAR_MAX_WIDTH = FALLBACK_MAX_PIXELS;
 export const AVATAR_MAX_HEIGHT = FALLBACK_MAX_PIXELS;
 
-
 // Removemos export das fixas pois a API agora consumirá variáveis dinâmicas.
 
 // WebP magic bytes: RIFF????WEBP
@@ -185,7 +184,12 @@ export function logoKey(tenantId: string, ext = "webp"): string {
  * Lemos as variáveis de sistema via `appConfig`.
  * Retorna a key R2.
  */
-export async function uploadImage(db: D1Database, key: string, buffer: ArrayBuffer, r2: R2Bucket): Promise<string> {
+export async function uploadImage(
+  db: D1Database,
+  key: string,
+  buffer: ArrayBuffer,
+  r2: R2Bucket,
+): Promise<string> {
   validateWebP(buffer);
 
   let maxBytes = FALLBACK_MAX_BYTES;

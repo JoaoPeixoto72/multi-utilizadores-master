@@ -4,7 +4,7 @@
  * R: BUILD_PLAN.md §M8.4
  */
 
-import type { PageServerLoad } from './$types';
+import type { PageServerLoad } from "./$types";
 
 interface BackupItem {
   id: string;

@@ -5,15 +5,15 @@
  * Guarda as sessões em ficheiros JSON reutilizados por todos os testes.
  * Evita rate limiting (5 tentativas/min por IP) do Durable Object.
  */
-import { chromium, type FullConfig } from '@playwright/test';
+import { chromium, type FullConfig } from "@playwright/test";
 
-const BASE_URL = process.env.BASE_URL ?? 'https://cf-base.acemang-jedi.workers.dev';
+const BASE_URL = process.env.BASE_URL ?? "https://cf-base.acemang-jedi.workers.dev";
 
 async function loginAndSave(
   baseURL: string,
   email: string,
   password: string,
-  stateFile: string
+  stateFile: string,
 ): Promise<void> {
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ baseURL, ignoreHTTPSErrors: true });
@@ -21,14 +21,14 @@ async function loginAndSave(
 
   try {
     // Obter CSRF
-    const csrfResp = await page.request.get('/api/auth/csrf');
+    const csrfResp = await page.request.get("/api/auth/csrf");
     const { token: csrf } = await csrfResp.json();
 
     // Login via API
-    const loginResp = await page.request.post('/api/auth/login', {
+    const loginResp = await page.request.post("/api/auth/login", {
       headers: {
-        'x-csrf-token': csrf,
-        'content-type': 'application/json',
+        "x-csrf-token": csrf,
+        "content-type": "application/json",
       },
       data: { email, password },
     });
@@ -47,6 +47,6 @@ async function loginAndSave(
 }
 
 export default async function globalSetup(_config: FullConfig) {
-  await loginAndSave(BASE_URL, 'acemang@gmail.com', 'Teste1234!@', 'e2e/.auth/super.json');
-  await loginAndSave(BASE_URL, 'joaopeixoto@hotmail.com', 'Teste1234!@', 'e2e/.auth/admin.json');
+  await loginAndSave(BASE_URL, "acemang@gmail.com", "Teste1234!@", "e2e/.auth/super.json");
+  await loginAndSave(BASE_URL, "joaopeixoto@hotmail.com", "Teste1234!@", "e2e/.auth/admin.json");
 }

@@ -54,7 +54,8 @@ function makeEnv(overrides: Partial<Env> = {}): Env {
     DB: (overrides.DB ?? makeDb()) as D1Database,
     CSRF_SECRET: overrides.CSRF_SECRET ?? CSRF_SECRET,
     SESSION_SECRET: overrides.SESSION_SECRET ?? SESSION_SECRET,
-    RATE_LIMITER: (overrides.RATE_LIMITER ?? ({} as DurableObjectNamespace)) as DurableObjectNamespace,
+    RATE_LIMITER: (overrides.RATE_LIMITER ??
+      ({} as DurableObjectNamespace)) as DurableObjectNamespace,
     R2_BUCKET: (overrides.R2_BUCKET ?? ({} as R2Bucket)) as R2Bucket,
     ENCRYPTION_KEY: overrides.ENCRYPTION_KEY ?? "c".repeat(64),
     CF_ACCOUNT_ID: overrides.CF_ACCOUNT_ID ?? "acc",

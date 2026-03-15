@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({ platform, url, request }) => {
       headers: {
         cookie: request.headers.get("cookie") ?? "",
       },
-    })
+    }),
   );
   if (!res.ok) {
     return { tenants: [], nextCursor: null, meta: { pending: 0, active: 0, inactive: 0 } };

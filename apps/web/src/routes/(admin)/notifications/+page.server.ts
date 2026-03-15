@@ -4,7 +4,7 @@
  * R: BUILD_PLAN.md §M6.4
  */
 
-import type { PageServerLoad, Actions } from "./$types";
+import type { Actions, PageServerLoad } from "./$types";
 
 interface Notification {
   id: string;

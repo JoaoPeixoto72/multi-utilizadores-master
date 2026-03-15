@@ -5,8 +5,8 @@
  * Portáveis para qualquer projecto — apenas editar os textos e o appName.
  */
 
-import { sendEmail, type EmailEnv } from "../sender.js";
-import { baseEmailHtml, ctaButton, para, fallbackUrl } from "./base.js";
+import { type EmailEnv, sendEmail } from "../sender.js";
+import { baseEmailHtml, ctaButton, fallbackUrl, para } from "./base.js";
 
 // ── Convite de membro ────────────────────────────────────────────────────────
 
@@ -23,25 +23,32 @@ export interface InviteEmailOptions {
 
 export async function sendInviteEmail(env: EmailEnv, opts: InviteEmailOptions) {
   const {
-    to, inviterName, tenantName, role,
-    inviteUrl, expiresInHours = 24, appName = "CF-Base",
+    to,
+    inviterName,
+    tenantName,
+    role,
+    inviteUrl,
+    expiresInHours = 24,
+    appName = "CF-Base",
   } = opts;
 
   const roleLabel = role === "member" ? "Membro" : role === "collaborator" ? "Colaborador" : role;
 
   const bodyHtml = [
-    para(`<strong>${inviterName}</strong> convidou-o para se juntar a <strong>${tenantName}</strong> como <strong>${roleLabel}</strong>.`),
+    para(
+      `<strong>${inviterName}</strong> convidou-o para se juntar a <strong>${tenantName}</strong> como <strong>${roleLabel}</strong>.`,
+    ),
     para(`O convite expira em ${expiresInHours} hora${expiresInHours === 1 ? "" : "s"}.`, true),
     ctaButton("Aceitar convite", inviteUrl),
     fallbackUrl(inviteUrl),
   ].join("");
 
   const html = baseEmailHtml({
-    title:       `Convite para ${tenantName}`,
+    title: `Convite para ${tenantName}`,
     previewText: `${inviterName} convidou-o para ${tenantName}`,
     bodyHtml,
     appName,
-    footerText:  "Se não esperava este convite, pode ignorar este email.",
+    footerText: "Se não esperava este convite, pode ignorar este email.",
   });
 
   const text = `${inviterName} convidou-o para se juntar a ${tenantName} como ${roleLabel}.\n\nAceitar convite: ${inviteUrl}\n\nO convite expira em ${expiresInHours}h.`;
@@ -64,18 +71,27 @@ export async function sendPasswordResetEmail(env: EmailEnv, opts: PasswordResetE
 
   const bodyHtml = [
     para("Recebemos um pedido para redefinir a password da sua conta."),
-    para(`Este link expira em ${expiresInMinutes} minuto${expiresInMinutes === 1 ? "" : "s"}.`, true),
+    para(
+      `Este link expira em ${expiresInMinutes} minuto${expiresInMinutes === 1 ? "" : "s"}.`,
+      true,
+    ),
     ctaButton("Redefinir password", resetUrl),
     fallbackUrl(resetUrl),
-    para("Se não pediu a redefinição de password, pode ignorar este email. A sua password permanece inalterada.", true),
+    para(
+      "Se não pediu a redefinição de password, pode ignorar este email. A sua password permanece inalterada.",
+      true,
+    ),
   ].join("");
 
   const html = baseEmailHtml({
-    title:       "Redefinir password",
+    title: "Redefinir password",
     previewText: "Pedido de redefinição de password",
     bodyHtml,
     appName,
-    footerText:  "Por segurança, este link é de uso único e expira ao fim de " + expiresInMinutes + " minutos.",
+    footerText:
+      "Por segurança, este link é de uso único e expira ao fim de " +
+      expiresInMinutes +
+      " minutos.",
   });
 
   const text = `Pedido de redefinição de password.\n\nRedefinir: ${resetUrl}\n\nExpira em ${expiresInMinutes} minutos.\n\nSe não pediu isto, ignore este email.`;
@@ -102,7 +118,7 @@ export async function sendWelcomeEmail(env: EmailEnv, opts: WelcomeEmailOptions)
   ].join("");
 
   const html = baseEmailHtml({
-    title:       `Bem-vindo ao ${appName}`,
+    title: `Bem-vindo ao ${appName}`,
     previewText: `A sua conta ${appName} está pronta`,
     bodyHtml,
     appName,

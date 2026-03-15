@@ -17,9 +17,9 @@
 
 import {
   countUnreadByUser,
+  deleteAllNotificationsByUser,
   deleteExpiredNotifications,
   deleteNotificationById,
-  deleteAllNotificationsByUser,
   getNotificationById,
   insertNotification,
   listNotificationsByUser,

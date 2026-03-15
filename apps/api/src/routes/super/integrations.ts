@@ -25,8 +25,8 @@ import {
   activateIntegrationById,
   createIntegration,
   deactivateIntegrationById,
-  getAllIntegrations,
   getActiveEmailAdapter,
+  getAllIntegrations,
   getEmailAdapterById,
   type IntegrationServiceError,
   removeIntegration,
@@ -206,7 +206,7 @@ superIntegrationsRouter.post("/integrations/verify-email", async (c) => {
     }
 
     // Aguardar 1.5s para evitar rate limit Resend (2 req/s) após o ping de teste
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1500));
     const appUrl = c.env.APP_URL ?? "https://cf-base.acemang-jedi.workers.dev";
     const verifyToken = crypto.randomUUID();
     const confirmUrl = `${appUrl}/super/integrations/confirm?token=${verifyToken}&id=${id}`;
@@ -252,7 +252,12 @@ superIntegrationsRouter.post("/integrations/verify-email", async (c) => {
 
     const adapter = await getEmailAdapterById(c.env.DB, c.env.ENCRYPTION_KEY, id);
     if (!adapter) {
-      return problemResponse(c, 422, "Integração não encontrada ou não é de email.", "no_email_adapter");
+      return problemResponse(
+        c,
+        422,
+        "Integração não encontrada ou não é de email.",
+        "no_email_adapter",
+      );
     }
 
     await adapter.send({

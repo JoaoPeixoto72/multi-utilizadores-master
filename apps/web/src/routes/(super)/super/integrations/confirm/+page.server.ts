@@ -12,7 +12,7 @@ import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ url, platform, request }) => {
   const cookiesHeader = request.headers.get("cookie") ?? "";
-  const id    = url.searchParams.get("id");
+  const id = url.searchParams.get("id");
   const token = url.searchParams.get("token");
 
   if (!id || !token) {

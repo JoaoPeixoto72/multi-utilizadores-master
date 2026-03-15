@@ -35,7 +35,3 @@ declare global {
     SENTRY_DSN?: string;
   }
 }
-
-export {};
-
-

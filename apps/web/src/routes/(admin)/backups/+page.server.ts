@@ -4,13 +4,13 @@
  * R: BUILD_PLAN.md §M8.4
  */
 
-import { isRedirect } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import { isRedirect } from "@sveltejs/kit";
+import type { Actions, PageServerLoad } from "./$types";
 
 interface BackupItem {
   id: string;
-  type: 'db_only' | 'full';
-  status: 'pending' | 'running' | 'done' | 'failed';
+  type: "db_only" | "full";
+  status: "pending" | "running" | "done" | "failed";
   size_bytes: number | null;
   r2_key: string | null;
   download_expires_at: number | null;
@@ -22,7 +22,7 @@ interface BackupItem {
 
 interface BackupAutoConfig {
   enabled: boolean;
-  frequency: 'daily' | 'weekly' | 'monthly';
+  frequency: "daily" | "weekly" | "monthly";
   day_of_week: number;
   retention_days: number;
 }
@@ -57,7 +57,7 @@ export const load: PageServerLoad = async ({ platform, cookies }) => {
   console.log("[admin/backups] config response body:", configText);
   const config: BackupAutoConfig = configRes.ok
     ? JSON.parse(configText)
-    : { enabled: false, frequency: 'weekly', day_of_week: 0, retention_days: 30 };
+    : { enabled: false, frequency: "weekly", day_of_week: 0, retention_days: 30 };
 
   return {
     backups: backupsData.items,
@@ -70,15 +70,15 @@ export const actions: Actions = {
   create: async ({ platform, request, cookies }) => {
     try {
       const form = await request.formData();
-      const type = (form.get('type') as string) || 'db_only';
-      const csrf = form.get('_csrf')?.toString() ?? '';
+      const type = (form.get("type") as string) || "db_only";
+      const csrf = form.get("_csrf")?.toString() ?? "";
 
       const res = await platform.env.API.fetch(
         new Request(`https://internal/api/admin/backups`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'x-csrf-token': csrf,
+            "Content-Type": "application/json",
+            "x-csrf-token": csrf,
             cookie: cookies.toString(),
           },
           body: JSON.stringify({ type }),
@@ -90,27 +90,27 @@ export const actions: Actions = {
 
       if (!res.ok) {
         const err = JSON.parse(bodyText) as { detail?: string };
-        return { success: false, error: err.detail ?? 'Erro ao criar backup' };
+        return { success: false, error: err.detail ?? "Erro ao criar backup" };
       }
 
       return { success: true };
     } catch (e) {
       if (isRedirect(e)) throw e;
-      return { success: false, error: 'Erro inesperado' };
+      return { success: false, error: "Erro inesperado" };
     }
   },
 
   delete: async ({ platform, request, cookies }) => {
     try {
       const form = await request.formData();
-      const id = form.get('id') as string;
-      const csrf = form.get('_csrf')?.toString() ?? '';
+      const id = form.get("id") as string;
+      const csrf = form.get("_csrf")?.toString() ?? "";
 
       const res = await platform.env.API.fetch(
         new Request(`https://internal/api/admin/backups/${id}`, {
-          method: 'DELETE',
+          method: "DELETE",
           headers: {
-            'x-csrf-token': csrf,
+            "x-csrf-token": csrf,
             cookie: cookies.toString(),
           },
         }),
@@ -120,33 +120,33 @@ export const actions: Actions = {
       console.log("[admin/backups] delete response body:", bodyText);
       if (!res.ok) {
         const err = JSON.parse(bodyText) as { detail?: string };
-        return { success: false, error: err.detail ?? 'Erro ao eliminar backup' };
+        return { success: false, error: err.detail ?? "Erro ao eliminar backup" };
       }
 
       return { success: true };
     } catch (e) {
       if (isRedirect(e)) throw e;
-      return { success: false, error: 'Erro inesperado' };
+      return { success: false, error: "Erro inesperado" };
     }
   },
 
   update_config: async ({ platform, request, cookies }) => {
     try {
       const form = await request.formData();
-      const csrf = form.get('_csrf')?.toString() ?? '';
+      const csrf = form.get("_csrf")?.toString() ?? "";
       const config = {
-        enabled: form.get('enabled') === 'true',
-        frequency: form.get('frequency') as string,
-        day_of_week: Number(form.get('day_of_week') ?? 0),
-        retention_days: Number(form.get('retention_days') ?? 30),
+        enabled: form.get("enabled") === "true",
+        frequency: form.get("frequency") as string,
+        day_of_week: Number(form.get("day_of_week") ?? 0),
+        retention_days: Number(form.get("retention_days") ?? 30),
       };
 
       const res = await platform.env.API.fetch(
         new Request(`https://internal/api/admin/backups/config`, {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
-            'Content-Type': 'application/json',
-            'x-csrf-token': csrf,
+            "Content-Type": "application/json",
+            "x-csrf-token": csrf,
             cookie: cookies.toString(),
           },
           body: JSON.stringify(config),
@@ -158,13 +158,13 @@ export const actions: Actions = {
 
       if (!res.ok) {
         const err = JSON.parse(bodyText) as { detail?: string };
-        return { success: false, error: err.detail ?? 'Erro ao actualizar configuração' };
+        return { success: false, error: err.detail ?? "Erro ao actualizar configuração" };
       }
 
       return { success: true };
     } catch (e) {
       if (isRedirect(e)) throw e;
-      return { success: false, error: 'Erro inesperado' };
+      return { success: false, error: "Erro inesperado" };
     }
   },
 };

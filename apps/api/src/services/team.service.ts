@@ -16,8 +16,8 @@ import {
 import { deleteAllUserSessions } from "../db/queries/sessions.js";
 import {
   getUserByIdAndTenant,
-  listCollaboratorsByTenant,
   listClientsByTenant,
+  listCollaboratorsByTenant,
   listMembersByTenant,
   softDeleteUser,
   type TeamUserRow,

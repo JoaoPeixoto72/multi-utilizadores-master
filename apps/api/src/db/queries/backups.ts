@@ -1,7 +1,7 @@
 // apps/api/src/db/queries/backups.ts
 // M8 — Queries de backups e configuração de backup automático
 
-// @ts-ignore
+// @ts-expect-error
 import { aliasedTable, and, asc, desc, eq, gt, isNull, sql } from "drizzle-orm";
 
 export interface BackupRow {
@@ -158,7 +158,9 @@ export async function deleteOldBackups(
       await db.prepare(`DELETE FROM backups WHERE id = ?`).bind(id).run();
     }
   }
-  return { deleted: rows.results.map((r: { id: string; r2_key: string | null }) => r.r2_key ?? r.id) };
+  return {
+    deleted: rows.results.map((r: { id: string; r2_key: string | null }) => r.r2_key ?? r.id),
+  };
 }
 
 // ── Auto Config ──────────────────────────────────────────────────────────────

@@ -4,8 +4,8 @@
  * R: BUILD_PLAN.md §M9.5
  */
 
-import { isRedirect } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import { isRedirect } from "@sveltejs/kit";
+import type { Actions, PageServerLoad } from "./$types";
 
 export interface ActivityItem {
   id: number;
@@ -22,14 +22,14 @@ export interface ActivityItem {
 
 export const load: PageServerLoad = async ({ platform, url, parent, cookies }) => {
   const { adminUser } = await parent();
-  const cursor = url.searchParams.get('cursor') || undefined;
-  const actor_id = url.searchParams.get('actor_id') || undefined;
-  const action = url.searchParams.get('action') || undefined;
+  const cursor = url.searchParams.get("cursor") || undefined;
+  const actor_id = url.searchParams.get("actor_id") || undefined;
+  const action = url.searchParams.get("action") || undefined;
 
   const params = new URLSearchParams();
-  if (cursor) params.set('cursor', cursor);
-  if (actor_id) params.set('actor_id', actor_id);
-  if (action) params.set('action', action);
+  if (cursor) params.set("cursor", cursor);
+  if (actor_id) params.set("actor_id", actor_id);
+  if (action) params.set("action", action);
 
   const res = await platform.env.API.fetch(
     new Request(`https://internal/api/admin/activity?${params}`, {
@@ -49,20 +49,20 @@ export const load: PageServerLoad = async ({ platform, url, parent, cookies }) =
     adminUser,
     items: data.items,
     nextCursor: data.nextCursor,
-    filters: { actor_id: actor_id ?? '', action: action ?? '' },
+    filters: { actor_id: actor_id ?? "", action: action ?? "" },
   };
 };
 
 export const actions: Actions = {
   clean: async ({ request, platform, cookies }) => {
     const form = await request.formData();
-    const csrfToken = form.get('csrf_token')?.toString() ?? '';
+    const csrfToken = form.get("csrf_token")?.toString() ?? "";
     try {
       const res = await platform.env.API.fetch(
         new Request(`https://internal/api/admin/activity`, {
-          method: 'DELETE',
+          method: "DELETE",
           headers: {
-            'x-csrf-token': csrfToken,
+            "x-csrf-token": csrfToken,
             cookie: cookies.toString(),
           },
         }),
@@ -71,18 +71,18 @@ export const actions: Actions = {
       console.log("[admin/activity] clean response status:", res.status);
       console.log("[admin/activity] clean response body:", bodyText);
       if (!res.ok) {
-        let msg = 'Erro ao limpar histórico';
+        let msg = "Erro ao limpar histórico";
         try {
           const err = JSON.parse(bodyText) as { detail?: string };
           msg = err.detail ?? msg;
-        } catch { }
+        } catch {}
         return { success: false, error: msg };
       }
       const data = JSON.parse(bodyText) as { deleted: number };
       return { success: true, deleted: data.deleted };
     } catch (e) {
       if (isRedirect(e)) throw e;
-      return { success: false, error: 'Erro inesperado' };
+      return { success: false, error: "Erro inesperado" };
     }
   },
 };

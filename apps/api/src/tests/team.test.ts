@@ -80,14 +80,14 @@ function makeDb(returnUser: MockUser | null, secondUser?: MockUser | null): D1Da
         if (currentCall === 1) return returnUser;
         return secondUser !== undefined ? secondUser : returnUser;
       },
-      run: async () => { },
+      run: async () => {},
       all: async () => ({ results: returnUser ? [returnUser] : [] }),
     };
   };
   return {
     prepare: (_sql: string) => ({
       first: async () => returnUser,
-      run: async () => { },
+      run: async () => {},
       all: async () => ({ results: returnUser ? [returnUser] : [] }),
       bind: (..._args: unknown[]): BindResult => bindResult(),
     }),
@@ -103,14 +103,14 @@ function makeDbSequential(users: (MockUser | null)[]): D1Database {
     index = Math.min(index + 1, users.length - 1);
     return {
       first: async () => user,
-      run: async () => { },
+      run: async () => {},
       all: async () => ({ results: user ? [user] : [] }),
     };
   };
   return {
     prepare: (_sql: string) => ({
       first: async () => users[0] ?? null,
-      run: async () => { },
+      run: async () => {},
       all: async () => ({ results: users[0] ? [users[0]] : [] }),
       bind: (..._args: unknown[]): BindResult => bindResult(),
     }),

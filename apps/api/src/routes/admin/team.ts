@@ -22,9 +22,9 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
+import { getInvitationById } from "../../db/queries/invitations.js";
 import { getTenantById } from "../../db/queries/tenants.js";
 import { getPermissionsMatrix, getUserByIdAndTenant } from "../../db/queries/users.js";
-import { getInvitationById } from "../../db/queries/invitations.js";
 import { inviteMemberTemplate } from "../../lib/integrations/email/templates/index.js";
 import { createLogger, getTraceId } from "../../lib/logger.js";
 import { problemResponse } from "../../lib/problem.js";
@@ -36,8 +36,8 @@ import { NOTIFICATION_TYPES, notifyAdmins } from "../../services/notification.se
 import {
   cancelTeamInvitation,
   deactivateCollaborator,
-  deleteTeamUser,
   deleteTeamInvitation,
+  deleteTeamUser,
   listClients,
   listCollaborators,
   listMembers,
@@ -188,7 +188,7 @@ adminTeamRouter.post("/collaborators/:id/deactivate", async (c) => {
         bodyKey: "notif_body_user_deactivated",
         params: { email: target.email },
         link: "/team",
-      }).catch(() => { });
+      }).catch(() => {});
 
       await logAction(c.env.DB, {
         tenant_id: tenantId,
@@ -270,7 +270,7 @@ adminTeamRouter.delete("/collaborators/:id", async (c) => {
         bodyKey: "notif_body_user_deleted",
         params: { email: target.email },
         link: "/team",
-      }).catch(() => { });
+      }).catch(() => {});
 
       await logAction(c.env.DB, {
         tenant_id: tenantId,
@@ -314,7 +314,7 @@ adminTeamRouter.delete("/members/:id", async (c) => {
         bodyKey: "notif_body_user_deleted",
         params: { email: target.email },
         link: "/team",
-      }).catch(() => { });
+      }).catch(() => {});
 
       await logAction(c.env.DB, {
         tenant_id: tenantId,
@@ -358,7 +358,7 @@ adminTeamRouter.delete("/clients/:id", async (c) => {
         bodyKey: "notif_body_user_deleted",
         params: { email: target.email },
         link: "/team",
-      }).catch(() => { });
+      }).catch(() => {});
 
       await logAction(c.env.DB, {
         tenant_id: tenantId,
@@ -464,7 +464,7 @@ adminTeamRouter.post("/invitations", zValidator("json", inviteSchema), async (c)
         text: emailTpl.text,
       },
       tenantId,
-    ).catch(() => { });
+    ).catch(() => {});
 
     await notifyAdmins(c.env.DB, tenantId, {
       type: NOTIFICATION_TYPES.INVITE_SENT,
@@ -472,7 +472,7 @@ adminTeamRouter.post("/invitations", zValidator("json", inviteSchema), async (c)
       bodyKey: "notif_body_invite_sent",
       params: { email: body.email, role: body.role },
       link: "/team",
-    }).catch(() => { });
+    }).catch(() => {});
 
     await logAction(c.env.DB, {
       tenant_id: tenantId,
@@ -553,7 +553,7 @@ adminTeamRouter.delete("/invitations/:id", async (c) => {
         bodyKey: "notif_body_invite_cancelled",
         params: { email: invite.email },
         link: "/team",
-      }).catch(() => { });
+      }).catch(() => {});
 
       await logAction(c.env.DB, {
         tenant_id: tenantId,

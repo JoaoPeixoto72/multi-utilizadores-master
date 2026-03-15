@@ -20,6 +20,7 @@ import { getBackupById } from "../../db/queries/backups.js";
 import { createLogger, getTraceId } from "../../lib/logger.js";
 import { problemResponse } from "../../lib/problem.js";
 import { authMiddleware } from "../../middleware/auth.js";
+import { logAction } from "../../services/activity-log.service.js";
 import {
   generateBackup,
   getAutoBackupConfig,
@@ -28,7 +29,6 @@ import {
   setAutoBackupConfig,
   streamBackupFromR2,
 } from "../../services/backup.service.js";
-import { logAction } from "../../services/activity-log.service.js";
 
 export const adminBackupsRouter = new Hono<{ Bindings: Env }>();
 

@@ -52,7 +52,7 @@ export const load: PageServerLoad = async ({ platform, parent, url, cookies }) =
   let clients: TeamUser[] = [];
   let invitations: Invitation[] = [];
   let permissions: PermissionRow[] = [];
-  let errors: Record<string, string> = {};
+  const errors: Record<string, string> = {};
 
   try {
     const [collabRes, membersRes, invitesRes, clientsRes] = await Promise.all([
@@ -107,7 +107,7 @@ export const load: PageServerLoad = async ({ platform, parent, url, cookies }) =
     console.log("[admin/team] invites response body:", invitesText);
     if (invitesRes.ok) {
       const data = JSON.parse(invitesText) as { rows: Invitation[] };
-      invitations = data.rows.filter(i => i.status !== "accepted");
+      invitations = data.rows.filter((i) => i.status !== "accepted");
     }
 
     const clientsText = await clientsRes.text();
@@ -190,7 +190,11 @@ export const actions: Actions = {
           return fail(409, { invite_error: msg, email, role });
         }
         if (res.status === 403) {
-          return fail(403, { invite_error: "Não tem permissão para enviar este convite.", email, role });
+          return fail(403, {
+            invite_error: "Não tem permissão para enviar este convite.",
+            email,
+            role,
+          });
         }
         return fail(res.status, { invite_error: msg, email, role });
       }
@@ -473,7 +477,9 @@ export const actions: Actions = {
       console.log("[admin/team] update_permissions response body:", bodyText);
       if (!res.ok) {
         const data = JSON.parse(bodyText) as { detail?: string };
-        return fail(res.status, { permissions_error: data.detail ?? "Erro ao actualizar permissões." });
+        return fail(res.status, {
+          permissions_error: data.detail ?? "Erro ao actualizar permissões.",
+        });
       }
       return { permissions_success: true };
     } catch (e) {

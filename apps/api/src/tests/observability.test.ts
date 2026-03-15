@@ -176,7 +176,11 @@ describe("withGracefulShutdown", () => {
     app.get("/ping", (c) => c.json({ pong: true }));
 
     const wrapped = withGracefulShutdown(
-      app.fetch as unknown as (request: Request, env: Env, ctx: ExecutionContext) => Response | Promise<Response>
+      app.fetch as unknown as (
+        request: Request,
+        env: Env,
+        ctx: ExecutionContext,
+      ) => Response | Promise<Response>,
     );
 
     const waitUntilSpy = vi.fn();
@@ -185,11 +189,7 @@ describe("withGracefulShutdown", () => {
       passThroughOnException: vi.fn(),
     } as unknown as ExecutionContext;
 
-    const res = await wrapped(
-      new Request("http://localhost/ping"),
-      mockEnv,
-      ctx,
-    );
+    const res = await wrapped(new Request("http://localhost/ping"), mockEnv, ctx);
 
     expect(res.status).toBe(200);
     expect(waitUntilSpy).toHaveBeenCalledTimes(1);

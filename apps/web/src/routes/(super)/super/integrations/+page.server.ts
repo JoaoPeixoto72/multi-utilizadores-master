@@ -5,7 +5,7 @@
  * Novo: action "verify" envia email de teste e marca integração como testada.
  */
 
-import type { PageServerLoad, Actions } from "./$types";
+import type { Actions, PageServerLoad } from "./$types";
 
 interface Integration {
   id: string;
@@ -30,7 +30,9 @@ export const load: PageServerLoad = async ({ platform, request }) => {
   const bodyText = await res.text();
   console.log("[super/integrations] load response status:", res.status);
   console.log("[super/integrations] load response body:", bodyText);
-  const data: { data: Integration[] } = res.ok ? (JSON.parse(bodyText) as { data: Integration[] }) : { data: [] };
+  const data: { data: Integration[] } = res.ok
+    ? (JSON.parse(bodyText) as { data: Integration[] })
+    : { data: [] };
   return { integrations: data.data ?? [] };
 };
 
@@ -62,13 +64,13 @@ export const actions: Actions = {
   create: async ({ platform, request }) => {
     const cookiesHeader = request.headers.get("cookie") ?? "";
     const form = await request.formData();
-    const category    = form.get("category") as string;
-    const provider    = form.get("provider") as string;
+    const category = form.get("category") as string;
+    const provider = form.get("provider") as string;
     // Campos simples para Resend — construir JSON internamente
-    const apiKey      = form.get("api_key") as string | null;
-    const fromEmail   = form.get("from_email") as string | null;
+    const apiKey = form.get("api_key") as string | null;
+    const fromEmail = form.get("from_email") as string | null;
     // Fallback: JSON raw (outros providers)
-    const rawJson     = form.get("credentials_json") as string | null;
+    const rawJson = form.get("credentials_json") as string | null;
 
     let credentials: Record<string, string>;
     try {
@@ -88,7 +90,11 @@ export const actions: Actions = {
     const res = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-csrf-token": csrf, cookie: cookiesHeader },
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": csrf,
+          cookie: cookiesHeader,
+        },
         body: JSON.stringify({ category, provider, credentials }),
       }),
     );
@@ -99,8 +105,7 @@ export const actions: Actions = {
     if (!res.ok) {
       const err = (bodyText ? JSON.parse(bodyText) : {}) as { detail?: string; title?: string };
       return {
-        error:
-          err.detail ?? err.title ?? `Erro ao criar integração (${res.status}).`,
+        error: err.detail ?? err.title ?? `Erro ao criar integração (${res.status}).`,
       };
     }
     return { success: true };
@@ -109,8 +114,8 @@ export const actions: Actions = {
   verify: async ({ platform, request }) => {
     const cookiesHeader = request.headers.get("cookie") ?? "";
     /** Testa a integração e envia um email de confirmação real */
-    const form  = await request.formData();
-    const id    = form.get("id") as string;
+    const form = await request.formData();
+    const id = form.get("id") as string;
     const email = form.get("verify_email") as string;
 
     if (!email || !email.includes("@")) {
@@ -129,7 +134,10 @@ export const actions: Actions = {
     const testText = await testRes.text();
     console.log("[super/integrations] verify test response status:", testRes.status);
     console.log("[super/integrations] verify test response body:", testText);
-    const testData = (testText ? JSON.parse(testText) : { ok: false, message: "Erro." }) as { ok: boolean; message: string };
+    const testData = (testText ? JSON.parse(testText) : { ok: false, message: "Erro." }) as {
+      ok: boolean;
+      message: string;
+    };
 
     if (!testData.ok) {
       return { verifyError: `Falha na ligação: ${testData.message}` };
@@ -139,7 +147,11 @@ export const actions: Actions = {
     const sendRes = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/verify-email`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-csrf-token": csrf, cookie: cookiesHeader },
+        headers: {
+          "Content-Type": "application/json",
+          "x-csrf-token": csrf,
+          cookie: cookiesHeader,
+        },
         body: JSON.stringify({ id, email }),
       }),
     );
@@ -152,15 +164,17 @@ export const actions: Actions = {
       return { verifyError: e.detail ?? "Ligação OK mas falha ao enviar email de teste." };
     }
 
-    return { verifySuccess: `Email de verificação enviado para ${email}. Verifique a sua caixa de entrada.` };
+    return {
+      verifySuccess: `Email de verificação enviado para ${email}. Verifique a sua caixa de entrada.`,
+    };
   },
 
   test: async ({ platform, request }) => {
     const cookiesHeader = request.headers.get("cookie") ?? "";
     const form = await request.formData();
-    const id   = form.get("id") as string;
+    const id = form.get("id") as string;
     const csrf = await getCsrf(platform, cookiesHeader);
-    const res  = await platform.env.API.fetch(
+    const res = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/${id}/test`, {
         method: "POST",
         headers: { "x-csrf-token": csrf, cookie: cookiesHeader },
@@ -176,9 +190,9 @@ export const actions: Actions = {
   activate: async ({ platform, request }) => {
     const cookiesHeader = request.headers.get("cookie") ?? "";
     const form = await request.formData();
-    const id   = form.get("id") as string;
+    const id = form.get("id") as string;
     const csrf = await getCsrf(platform, cookiesHeader);
-    const res  = await platform.env.API.fetch(
+    const res = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/${id}/activate`, {
         method: "POST",
         headers: { "x-csrf-token": csrf, cookie: cookiesHeader },
@@ -197,7 +211,7 @@ export const actions: Actions = {
   deactivate: async ({ platform, request }) => {
     const cookiesHeader = request.headers.get("cookie") ?? "";
     const form = await request.formData();
-    const id   = form.get("id") as string;
+    const id = form.get("id") as string;
     const csrf = await getCsrf(platform, cookiesHeader);
     const res = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/${id}/deactivate`, {
@@ -212,7 +226,7 @@ export const actions: Actions = {
   delete: async ({ platform, request }) => {
     const cookiesHeader = request.headers.get("cookie") ?? "";
     const form = await request.formData();
-    const id   = form.get("id") as string;
+    const id = form.get("id") as string;
     const csrf = await getCsrf(platform, cookiesHeader);
     const res = await platform.env.API.fetch(
       new Request(`https://internal/api/super/integrations/${id}`, {

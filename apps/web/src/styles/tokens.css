@@ -137,7 +137,7 @@
   --btn-action-border: rgba(229, 231, 235, 0.45);
   --btn-action-text: var(--text-primary);
   --btn-action-bg-hover: rgba(229, 231, 235, 0.08);
-  --btn-action-border-hover: rgba(229, 231, 235, 0.70);
+  --btn-action-border-hover: rgba(229, 231, 235, 0.7);
   --text-secondary: #b6c0cf;
   --text-muted: #7f8aa3;
   --text-xmuted: #58627a;
@@ -483,7 +483,7 @@
 
   /* Action button (filtrar / nova empresa) — outline escuro com transparência */
   --btn-action-bg: transparent;
-  --btn-action-border: rgba(17, 24, 39, 0.55);   /* text-primary 55% */
+  --btn-action-border: rgba(17, 24, 39, 0.55); /* text-primary 55% */
   --btn-action-text: var(--text-primary);
   --btn-action-bg-hover: rgba(17, 24, 39, 0.08); /* 8% fill no hover */
   --btn-action-border-hover: rgba(17, 24, 39, 0.75);

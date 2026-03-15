@@ -23,9 +23,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   const palette = (VALID_PALETTES as readonly string[]).includes(rawPalette ?? "")
     ? rawPalette!
     : "indigo";
-  const theme = (VALID_THEMES as readonly string[]).includes(rawTheme ?? "")
-    ? rawTheme!
-    : "light";
+  const theme = (VALID_THEMES as readonly string[]).includes(rawTheme ?? "") ? rawTheme! : "light";
 
   return resolve(event, {
     transformPageChunk({ html }) {

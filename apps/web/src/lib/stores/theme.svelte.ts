@@ -23,27 +23,27 @@ export const PALETTES: Palette[] = ["indigo", "emerald", "rose", "amber", "slate
 export const THEMES: Theme[] = ["light", "dark"];
 
 const PALETTE_LABELS: Record<Palette, string> = {
-  indigo:  "Indigo",
+  indigo: "Indigo",
   emerald: "Esmeralda",
-  rose:    "Rosa",
-  amber:   "Âmbar",
-  slate:   "Cinza",
-  ocean:   "Oceano",
+  rose: "Rosa",
+  amber: "Âmbar",
+  slate: "Cinza",
+  ocean: "Oceano",
 };
 
 const LAYOUT_LABELS: Record<Layout, string> = {
   sidebar: "Sidebar",
   compact: "Compacta",
-  topnav:  "Topo",
+  topnav: "Topo",
 };
 
 const PALETTE_COLORS: Record<Palette, string> = {
-  indigo:  "#6366f1",
+  indigo: "#6366f1",
   emerald: "#10b981",
-  rose:    "#f43f5e",
-  amber:   "#f59e0b",
-  slate:   "#64748b",
-  ocean:   "#0ea5e9",
+  rose: "#f43f5e",
+  amber: "#f59e0b",
+  slate: "#64748b",
+  ocean: "#0ea5e9",
 };
 
 // ── Helpers de cookie ─────────────────────────────────────────────────────────
@@ -93,13 +93,13 @@ function createThemeStore() {
    * Chamar no onMount do root layout.
    */
   function init(): void {
-    const savedLayout  = getCookie("cf_layout")  as Layout  | null;
+    const savedLayout = getCookie("cf_layout") as Layout | null;
     const savedPalette = getCookie("cf_palette") as Palette | null;
-    const savedTheme   = getCookie("cf_theme")   as Theme   | null;
+    const savedTheme = getCookie("cf_theme") as Theme | null;
 
-    if (savedLayout  && LAYOUTS.includes(savedLayout))   layout  = savedLayout;
+    if (savedLayout && LAYOUTS.includes(savedLayout)) layout = savedLayout;
     if (savedPalette && PALETTES.includes(savedPalette)) palette = savedPalette;
-    if (savedTheme   && THEMES.includes(savedTheme))     theme   = savedTheme;
+    if (savedTheme && THEMES.includes(savedTheme)) theme = savedTheme;
 
     applyToBody(layout, palette, theme);
   }
@@ -127,9 +127,15 @@ function createThemeStore() {
   }
 
   return {
-    get layout()  { return layout;  },
-    get palette() { return palette; },
-    get theme()   { return theme;   },
+    get layout() {
+      return layout;
+    },
+    get palette() {
+      return palette;
+    },
+    get theme() {
+      return theme;
+    },
     init,
     setLayout,
     setPalette,

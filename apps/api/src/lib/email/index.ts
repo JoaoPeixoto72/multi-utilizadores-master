@@ -31,9 +31,9 @@
  */
 
 export type { EmailEnv } from "./sender.js";
-export { sendEmail }     from "./sender.js";
+export { sendEmail } from "./sender.js";
 export {
   sendInviteEmail,
   sendPasswordResetEmail,
   sendWelcomeEmail,
-}                        from "./templates/index.js";
+} from "./templates/index.js";
