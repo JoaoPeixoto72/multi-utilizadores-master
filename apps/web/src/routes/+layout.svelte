@@ -41,11 +41,12 @@
     fontsData.find((f) => f.id === fontId) || fontsData[0],
   );
 
-  // appConfig com cores custom (vindas da BD via +layout.server.ts)
+  // appConfig com cores vindas da BD via +layout.server.ts
   const appConfig = $derived(data.appConfig ?? {});
 
-  // Variáveis CSS que o palette-custom pode sobrescrever via setProperty
-  const CUSTOM_CSS_MAP: [string, string][] = [
+  // Mapa de variáveis CSS ↔ chaves do appConfig
+  // Sempre aplicadas quando existem valores no appConfig (presets e custom)
+  const COLOR_CSS_MAP: [string, string][] = [
     ["--brand-500", "ui_color_primary"],
     ["--brand-600", "ui_color_primary"],
     ["--brand-primary", "ui_color_primary"],
@@ -62,7 +63,7 @@
   ];
 
   // Aplicar atributos no <body> via $effect (Svelte 5 — svelte:body não suporta data-*)
-  // Aplica classe de paleta E cores custom do appConfig quando palette === "custom"
+  // Aplica classe de paleta E cores do appConfig (presets guardam cores na BD)
   $effect(() => {
     if (!browser) return;
     const currentLayout = themeStore.layout || layout;
@@ -77,22 +78,17 @@
     for (const cls of Array.from(classList)) {
       if (cls.startsWith("palette-")) classList.remove(cls);
     }
+    classList.add(`palette-${currentPalette}`);
 
-    const isCustomPalette = currentPalette === "custom" || data.palette === "custom";
-
-    if (isCustomPalette) {
-      classList.add("palette-custom");
-      // Aplicar cores do appConfig como overrides no <body>
-      for (const [cssVar, configKey] of CUSTOM_CSS_MAP) {
-        const value = appConfig[configKey];
-        if (value) {
-          document.body.style.setProperty(cssVar, value);
-        }
-      }
-    } else {
-      classList.add(`palette-${currentPalette}`);
-      // Limpar quaisquer overrides custom anteriores
-      for (const [cssVar] of CUSTOM_CSS_MAP) {
+    // Aplicar cores do appConfig como overrides no <body>
+    // Tanto presets como custom guardam cores no appConfig — aplicar sempre
+    let hasAnyColor = false;
+    for (const [cssVar, configKey] of COLOR_CSS_MAP) {
+      const value = appConfig[configKey];
+      if (value) {
+        document.body.style.setProperty(cssVar, value);
+        hasAnyColor = true;
+      } else {
         document.body.style.removeProperty(cssVar);
       }
     }
