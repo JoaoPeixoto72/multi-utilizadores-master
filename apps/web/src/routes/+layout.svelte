@@ -36,64 +36,66 @@
   const layout = $derived(themeStore.layout ?? data.layout ?? "sidebar");
   const theme = $derived(themeStore.theme ?? data.theme ?? "light");
   const palette = $derived(themeStore.palette ?? data.palette ?? "indigo");
-  const radius = $derived(data.radius ?? "lg");
   const fontId = $derived(data.fontFamily ?? "inter");
   const fontObj = $derived(
     fontsData.find((f) => f.id === fontId) || fontsData[0],
   );
-  const borderActive = $derived(data.borderActive !== "false");
-  const borderColor = $derived(data.borderColor ?? "");
-  const inputBgColor = $derived(data.inputBgColor ?? "");
-  const inputPadding = $derived(data.inputPadding ?? "");
-  const buttonRadius = $derived(data.buttonRadius ?? "full");
-  const buttonBgColor = $derived(data.buttonBgColor ?? "");
-  const buttonTextColor = $derived(data.buttonTextColor ?? "");
 
-  // Extract custom colors from appConfig
+  // appConfig com cores custom (vindas da BD via +layout.server.ts)
   const appConfig = $derived(data.appConfig ?? {});
-  const colorPrimary = $derived(appConfig.ui_color_primary ?? "");
-  const colorSecondary = $derived(appConfig.ui_color_secondary ?? "");
-  const colorBackground = $derived(appConfig.ui_color_background ?? "");
-  const colorSurface = $derived(appConfig.ui_color_surface ?? "");
-  const colorActionBtn = $derived(appConfig.ui_color_action_btn ?? "");
-  const colorActionText = $derived(appConfig.ui_color_action_text ?? "");
-  const colorWarning = $derived(appConfig.ui_color_warning ?? "");
-  const colorDanger = $derived(appConfig.ui_color_danger ?? "");
-  const colorLink = $derived(appConfig.ui_color_link ?? "");
+
+  // Variáveis CSS que o palette-custom pode sobrescrever via setProperty
+  const CUSTOM_CSS_MAP: [string, string][] = [
+    ["--brand-500", "ui_color_primary"],
+    ["--brand-600", "ui_color_primary"],
+    ["--brand-primary", "ui_color_primary"],
+    ["--color-primary", "ui_color_primary"],
+    ["--color-secondary", "ui_color_secondary"],
+    ["--bg-page", "ui_color_background"],
+    ["--bg-surface", "ui_color_surface"],
+    ["--btn-action-bg", "ui_color_action_btn"],
+    ["--btn-action-text", "ui_color_action_text"],
+    ["--color-warning", "ui_color_warning"],
+    ["--color-danger", "ui_color_danger"],
+    ["--color-link", "ui_color_link"],
+    ["--text-primary", "ui_color_text_primary"],
+  ];
 
   // Aplicar atributos no <body> via $effect (Svelte 5 — svelte:body não suporta data-*)
-  // Aplicamos as classes de tema e layout E as cores customizadas do appConfig
+  // Aplica classe de paleta E cores custom do appConfig quando palette === "custom"
   $effect(() => {
     if (!browser) return;
-    // Only set attributes if themeStore is initialized (has non-default values)
-    // or if we're using the data values (initial render)
     const currentLayout = themeStore.layout || layout;
     const currentTheme = themeStore.theme || theme;
     const currentPalette = themeStore.palette || palette;
-    
+
     document.body.setAttribute("data-layout", currentLayout);
     document.body.setAttribute("data-theme", currentTheme);
+
     // Remover classes de paleta anteriores e adicionar a nova
     const classList = document.body.classList;
     for (const cls of Array.from(classList)) {
       if (cls.startsWith("palette-")) classList.remove(cls);
     }
-    classList.add(`palette-${currentPalette}`);
 
-    // Apply custom branding colors from appConfig
-    const root = document.documentElement;
-    if (colorPrimary) root.style.setProperty("--color-primary", colorPrimary);
-    if (colorSecondary) root.style.setProperty("--color-secondary", colorSecondary);
-    if (colorBackground) root.style.setProperty("--bg-page", colorBackground);
-    if (colorSurface) root.style.setProperty("--bg-surface", colorSurface);
-    if (colorActionBtn) root.style.setProperty("--btn-action-bg", colorActionBtn);
-    if (colorActionText) root.style.setProperty("--btn-action-text", colorActionText);
-    if (colorWarning) root.style.setProperty("--color-warning", colorWarning);
-    if (colorDanger) root.style.setProperty("--color-danger", colorDanger);
-    if (colorLink) root.style.setProperty("--color-link", colorLink);
-    // Apply text primary color if custom
-    const textPrimary = appConfig.ui_color_text_primary;
-    if (textPrimary) root.style.setProperty("--text-primary", textPrimary);
+    const isCustomPalette = currentPalette === "custom" || data.palette === "custom";
+
+    if (isCustomPalette) {
+      classList.add("palette-custom");
+      // Aplicar cores do appConfig como overrides no <body>
+      for (const [cssVar, configKey] of CUSTOM_CSS_MAP) {
+        const value = appConfig[configKey];
+        if (value) {
+          document.body.style.setProperty(cssVar, value);
+        }
+      }
+    } else {
+      classList.add(`palette-${currentPalette}`);
+      // Limpar quaisquer overrides custom anteriores
+      for (const [cssVar] of CUSTOM_CSS_MAP) {
+        document.body.style.removeProperty(cssVar);
+      }
+    }
   });
 </script>
 

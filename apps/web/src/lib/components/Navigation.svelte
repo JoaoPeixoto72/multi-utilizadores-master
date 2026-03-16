@@ -106,12 +106,12 @@
   }
 
   .module-nav-item:hover {
-    background: var(--color-surface-2, #f3f4f6);
+    background: var(--brand-hover);
   }
 
   .module-nav-item.active {
-    background: var(--color-primary-light, #eff6ff);
-    color: var(--color-primary, #2563eb);
+    background: var(--brand-primary-light);
+    color: var(--brand-primary);
   }
 
   .module-nav-item.needs-integration {

@@ -448,6 +448,7 @@
     }}
   >
     <input type="hidden" name="_csrf" value={data.csrfToken} />
+    <input type="hidden" name="ui_theme_palette" value={activePresetId} />
 
     <!-- ── TAB: Branding (Advanced Colors) ── -->
     {#if activeTab === "branding"}

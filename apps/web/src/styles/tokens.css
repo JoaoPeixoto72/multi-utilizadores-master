@@ -172,6 +172,7 @@
 
 /* ── INDIGO (default) ── */
 .palette-indigo {
+  --brand-25: #f8f9ff;
   --brand-50: #f0f4ff;
   --brand-100: #e0e9ff;
   --brand-200: #c7d7fe;
@@ -186,10 +187,14 @@
   --avatar-bg: #f0f4ff;
   --avatar-text: #4338ca;
   --ring-color: rgba(99, 102, 241, 0.15);
+  --brand-primary: var(--brand-500);
+  --brand-primary-light: var(--brand-50);
+  --brand-hover: var(--brand-25);
 }
 
 /* ── EMERALD ── */
 .palette-emerald {
+  --brand-25: #f0fdfa;
   --brand-50: #ecfdf5;
   --brand-100: #d1fae5;
   --brand-200: #a7f3d0;
@@ -204,10 +209,14 @@
   --avatar-bg: #ecfdf5;
   --avatar-text: #047857;
   --ring-color: rgba(16, 185, 129, 0.15);
+  --brand-primary: var(--brand-500);
+  --brand-primary-light: var(--brand-50);
+  --brand-hover: var(--brand-25);
 }
 
 /* ── ROSE ── */
 .palette-rose {
+  --brand-25: #fff5f6;
   --brand-50: #fff1f2;
   --brand-100: #ffe4e6;
   --brand-200: #fecdd3;
@@ -222,10 +231,14 @@
   --avatar-bg: #fff1f2;
   --avatar-text: #be123c;
   --ring-color: rgba(244, 63, 94, 0.15);
+  --brand-primary: var(--brand-500);
+  --brand-primary-light: var(--brand-50);
+  --brand-hover: var(--brand-25);
 }
 
 /* ── AMBER ── */
 .palette-amber {
+  --brand-25: #fffcf5;
   --brand-50: #fffbeb;
   --brand-100: #fef3c7;
   --brand-200: #fde68a;
@@ -240,10 +253,14 @@
   --avatar-bg: #fffbeb;
   --avatar-text: #92400e;
   --ring-color: rgba(245, 158, 11, 0.15);
+  --brand-primary: var(--brand-500);
+  --brand-primary-light: var(--brand-50);
+  --brand-hover: var(--brand-25);
 }
 
 /* ── SLATE ── */
 .palette-slate {
+  --brand-25: #fafbfc;
   --brand-50: #f8fafc;
   --brand-100: #f1f5f9;
   --brand-200: #e2e8f0;
@@ -258,10 +275,14 @@
   --avatar-bg: #f1f5f9;
   --avatar-text: #334155;
   --ring-color: rgba(100, 116, 139, 0.15);
+  --brand-primary: var(--brand-500);
+  --brand-primary_light: var(--brand-50);
+  --brand-hover: var(--brand-25);
 }
 
 /* ── OCEAN ── */
 .palette-ocean {
+  --brand-25: #f0f9ff;
   --brand-50: #eff8ff;
   --brand-100: #dbeafe;
   --brand-200: #bfdbfe;
@@ -276,6 +297,44 @@
   --avatar-bg: #eff8ff;
   --avatar-text: #0369a1;
   --ring-color: rgba(14, 165, 233, 0.15);
+  --brand-primary: var(--brand-500);
+  --brand-primary-light: var(--brand-50);
+  --brand-hover: var(--brand-25);
+}
+
+/* ── CUSTOM (cores definidas pelo utilizador em settings) ── */
+.palette-custom {
+  /* Valores base - serão sobrescritos via JS quando utilizador definir cores custom */
+  --brand-25: #f5f6ff;
+  --brand-50: #f0f4ff;
+  --brand-100: #e0e9ff;
+  --brand-200: #c7d7fe;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --brand-700: #4338ca;
+  --brand-800: #3730a3;
+  --badge-role-bg: #f5f3ff;
+  --badge-role-text: #7c3aed;
+  --nav-active-bg: #f0f4ff;
+  --nav-active-text: #4338ca;
+  --avatar-bg: #f0f4ff;
+  --avatar-text: #4338ca;
+  --ring-color: rgba(99, 102, 241, 0.15);
+  --brand-primary: var(--brand-500);
+  --brand-primary-light: var(--brand-50);
+  --brand-hover: var(--brand-25);
+
+  /* Cores de superfície - com fallbacks para tokens existentes */
+  --bg-page: #f7f8fa;
+  --bg-surface: #ffffff;
+  --btn-action-bg: transparent;
+  --btn-action-text: #111827;
+  --text-primary: #111827;
+  --color-primary: var(--brand-500);
+  --color-secondary: #64748b;
+  --color-warning: #f59e0b;
+  --color-danger: #dc2626;
+  --color-link: #3b82f6;
 }
 
 /* ============================================================
@@ -340,6 +399,22 @@
   --avatar-bg: rgba(14, 165, 233, 0.16);
   --avatar-text: #bfdbfe;
   --ring-color: rgba(14, 165, 233, 0.28);
+}
+
+[data-theme="dark"].palette-custom {
+  --nav-active-bg: rgba(99, 102, 241, 0.16);
+  --nav-active-text: #c7d7fe;
+  --badge-role-bg: rgba(99, 102, 241, 0.16);
+  --badge-role-text: #c7d7fe;
+  --avatar-bg: rgba(99, 102, 241, 0.16);
+  --avatar-text: #c7d7fe;
+  --ring-color: rgba(99, 102, 241, 0.28);
+  --bg-page: #0b0f17;
+  --bg-surface: #0f1623;
+  --color-danger: #f87171;
+  --color-warning: #fbbf24;
+  --color-link: #60a5fa;
+  --text-primary: #e5e7eb;
 }
 
 /* ============================================================

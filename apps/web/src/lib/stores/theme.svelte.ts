@@ -15,11 +15,19 @@
  */
 
 export type Layout = "sidebar" | "compact" | "topnav";
-export type Palette = "indigo" | "emerald" | "rose" | "amber" | "slate" | "ocean";
+export type Palette = "indigo" | "emerald" | "rose" | "amber" | "slate" | "ocean" | "custom";
 export type Theme = "light" | "dark";
 
 export const LAYOUTS: Layout[] = ["sidebar", "compact", "topnav"];
-export const PALETTES: Palette[] = ["indigo", "emerald", "rose", "amber", "slate", "ocean"];
+export const PALETTES: Palette[] = [
+  "indigo",
+  "emerald",
+  "rose",
+  "amber",
+  "slate",
+  "ocean",
+  "custom",
+];
 export const THEMES: Theme[] = ["light", "dark"];
 
 const PALETTE_LABELS: Record<Palette, string> = {
@@ -29,6 +37,7 @@ const PALETTE_LABELS: Record<Palette, string> = {
   amber: "Âmbar",
   slate: "Cinza",
   ocean: "Oceano",
+  custom: "Custom",
 };
 
 const LAYOUT_LABELS: Record<Layout, string> = {
@@ -44,6 +53,7 @@ const PALETTE_COLORS: Record<Palette, string> = {
   amber: "#f59e0b",
   slate: "#64748b",
   ocean: "#0ea5e9",
+  custom: "#6366f1", // Cor base para custom - será sobrescrita pelo utilizador
 };
 
 // ── Helpers de cookie ─────────────────────────────────────────────────────────

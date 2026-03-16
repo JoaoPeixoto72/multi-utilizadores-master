@@ -16,7 +16,10 @@
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
     "check": "turbo run check",
-    "deploy:api": "pnpm --dir apps/api wrangler deploy --env production"
+    "deploy:web": "pnpm --filter {apps/web} deploy",
+    "deploy:web:full": "pnpm --filter {apps/web} build && pnpm --filter {apps/web} run deploy",
+    "deploy:api": "pnpm --filter {apps/api} deploy",
+    "deploy:api:full": "pnpm --filter {apps/api} build && pnpm --filter {apps/api} run deploy"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.7",
