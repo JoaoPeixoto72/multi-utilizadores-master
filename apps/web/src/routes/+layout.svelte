@@ -44,13 +44,19 @@
   // appConfig com cores vindas da BD via +layout.server.ts
   const appConfig = $derived(data.appConfig ?? {});
 
-  // Mapa de variáveis CSS ↔ chaves do appConfig
-  // Sempre aplicadas quando existem valores no appConfig (presets e custom)
-  const COLOR_CSS_MAP: [string, string][] = [
+  // Cores de MARCA — aplicam sempre (não conflitam com dark mode)
+  const BRAND_CSS_MAP: [string, string][] = [
     ["--brand-500", "ui_color_primary"],
     ["--brand-600", "ui_color_primary"],
     ["--brand-primary", "ui_color_primary"],
     ["--color-primary", "ui_color_primary"],
+  ];
+
+  // Cores de SUPERFÍCIE/SEMÂNTICAS — só em light mode
+  // Em dark mode, tokens.css [data-theme="dark"] define estas variáveis.
+  // setProperty no body tem especificidade superior ao CSS, por isso
+  // precisamos de removeProperty em dark para deixar o CSS actuar.
+  const SURFACE_CSS_MAP: [string, string][] = [
     ["--color-secondary", "ui_color_secondary"],
     ["--bg-page", "ui_color_background"],
     ["--bg-surface", "ui_color_surface"],
@@ -69,6 +75,7 @@
     const currentLayout = themeStore.layout || layout;
     const currentTheme = themeStore.theme || theme;
     const currentPalette = themeStore.palette || palette;
+    const isDark = currentTheme === "dark";
 
     document.body.setAttribute("data-layout", currentLayout);
     document.body.setAttribute("data-theme", currentTheme);
@@ -80,16 +87,28 @@
     }
     classList.add(`palette-${currentPalette}`);
 
-    // Aplicar cores do appConfig como overrides no <body>
-    // Tanto presets como custom guardam cores no appConfig — aplicar sempre
-    let hasAnyColor = false;
-    for (const [cssVar, configKey] of COLOR_CSS_MAP) {
+    // Cores de marca — aplicar sempre (light e dark)
+    for (const [cssVar, configKey] of BRAND_CSS_MAP) {
       const value = appConfig[configKey];
       if (value) {
         document.body.style.setProperty(cssVar, value);
-        hasAnyColor = true;
       } else {
         document.body.style.removeProperty(cssVar);
+      }
+    }
+
+    // Cores de superfície — só em light mode
+    // Em dark mode, remover para que [data-theme="dark"] no tokens.css actue
+    for (const [cssVar, configKey] of SURFACE_CSS_MAP) {
+      if (isDark) {
+        document.body.style.removeProperty(cssVar);
+      } else {
+        const value = appConfig[configKey];
+        if (value) {
+          document.body.style.setProperty(cssVar, value);
+        } else {
+          document.body.style.removeProperty(cssVar);
+        }
       }
     }
   });
