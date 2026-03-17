@@ -1,4 +1,5 @@
-.gitignore — cf-base
+# .gitignore — cf-base (pnpm + turbo + wrangler)
+
 # Dependências
 node_modules/
 .pnpm-store/
@@ -6,8 +7,12 @@ node_modules/
 # Build outputs
 .svelte-kit/
 dist/
-.wrangler/
 *.tsbuildinfo
+
+# Caches
+.turbo/
+.vite/
+.wrangler/
 
 # Secrets — NUNCA commitar
 .dev.vars
@@ -18,7 +23,6 @@ dist/
 
 # Logs
 *.log
-npm-debug.log*
 pnpm-debug.log*
 
 # OS
@@ -42,8 +46,10 @@ e2e-results.json
 # Coverage
 coverage/
 .nyc_output/
+
+# GitHub (se não usar)
 .github/
-.turbo/
-.svelte-kit/
+
+# Ficheiros temporários gerados
 apps/web/*.txt
 apps/web/check*.json

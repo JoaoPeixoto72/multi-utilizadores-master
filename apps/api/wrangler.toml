@@ -6,6 +6,9 @@ compatibility_flags = ["nodejs_als", "nodejs_compat"]
 [observability]
 enabled = true
 
+# ============================================================
+# DEFAULT — wrangler dev (local)
+# ============================================================
 [[d1_databases]]
 binding = "DB"
 database_name = "arch"
@@ -29,9 +32,34 @@ crons = ["0 0 * * *"]
 
 [vars]
 APP_ENV = "development"
-APP_URL = "http://localhost:5173"
-API_URL = "http://127.0.0.1:8787"
+APP_URL = "http://localhost:8788"
+API_URL = "http://localhost:8787"
 
+# ============================================================
+# STAGING — wrangler deploy --env staging
+# ============================================================
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "arch-staging"
+database_id = "5e470af9-10b0-4c9b-8fc3-16bd139808f7"
+migrations_dir = "migrations"
+
+[[env.staging.durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+
+[[env.staging.r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "arch-storage-staging"
+
+[env.staging.vars]
+APP_ENV = "staging"
+APP_URL = "https://arch-web-staging.acemang-jedi.workers.dev"
+API_URL = "https://arch-api-staging.acemang-jedi.workers.dev"
+
+# ============================================================
+# PRODUCTION — wrangler deploy --env production
+# ============================================================
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "arch"

@@ -10,7 +10,9 @@
     "lint": "biome check src/",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "deploy": "wrangler deploy --env production"
+    "deploy": "wrangler deploy --env production",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
   },
   "dependencies": {
     "@hono/zod-validator": "0.7.6",

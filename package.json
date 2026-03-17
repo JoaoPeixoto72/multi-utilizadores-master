@@ -16,10 +16,12 @@
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
     "check": "turbo run check",
-    "deploy:web": "pnpm --filter {apps/web} deploy",
-    "deploy:web:full": "pnpm --filter {apps/web} build && pnpm --filter {apps/web} run deploy",
-    "deploy:api": "pnpm --filter {apps/api} deploy",
-    "deploy:api:full": "pnpm --filter {apps/api} build && pnpm --filter {apps/api} run deploy"
+    "deploy:web": "pnpm --filter web run deploy",
+    "deploy:web:full": "pnpm --filter web run build && pnpm --filter web run deploy",
+    "deploy:api": "pnpm --filter api run deploy",
+    "deploy:api:full": "pnpm --filter api run build && pnpm --filter api run deploy",
+    "deploy:staging": "pnpm --filter api run deploy:staging && pnpm --filter web run build && pnpm --filter web run deploy:staging",
+    "deploy:production": "pnpm --filter api run deploy:production && pnpm --filter web run build && pnpm --filter web run deploy:production"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.7",

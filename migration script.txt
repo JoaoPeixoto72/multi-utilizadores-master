@@ -1,0 +1,479 @@
+
+
+Now I have everything. The seed.sql only has the admin user insert — but since your app has the `/setup` page that creates the super user on first visit, this seed is actually just a fallback/legacy entry. The script shouldn't touch the email or password in the seed since `/setup` handles that.
+
+Let me update the script with the final corrections:
+
+```powershell
+# setup-new-project.ps1
+# ─────────────────────────────────────────────────────────
+# cf-base → Novo Projecto — Setup Wizard
+# Duplo-clique no setup.bat para executar
+# ─────────────────────────────────────────────────────────
+
+$ErrorActionPreference = "Stop"
+
+function Write-Step($msg) { Write-Host "`n▶ $msg" -ForegroundColor Cyan }
+function Write-Ok($msg)   { Write-Host "  ✔ $msg" -ForegroundColor Green }
+function Write-Warn($msg) { Write-Host "  ⚠ $msg" -ForegroundColor Yellow }
+function Write-Err($msg)  { Write-Host "  ✖ $msg" -ForegroundColor Red }
+
+Clear-Host
+Write-Host "═══════════════════════════════════════════════" -ForegroundColor Magenta
+Write-Host "   cf-base → Novo Projecto — Setup Wizard"       -ForegroundColor Magenta
+Write-Host "═══════════════════════════════════════════════" -ForegroundColor Magenta
+
+# ─────────────────────────────────────────────────────────
+# 0. Instalar pré-requisitos automaticamente
+# ─────────────────────────────────────────────────────────
+Write-Step "A verificar e instalar pré-requisitos..."
+
+# Node.js
+if (-not (Get-Command "node" -ErrorAction SilentlyContinue)) {
+    Write-Warn "Node.js não encontrado. A instalar via winget..."
+    winget install OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements
+    if ($LASTEXITCODE -ne 0) {
+        Write-Err "Falhou a instalar Node.js. Instala manualmente: https://nodejs.org"
+        Read-Host "Prima Enter para sair"
+        exit 1
+    }
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Write-Ok "Node.js instalado"
+} else {
+    Write-Ok "node $(node -v)"
+}
+
+# pnpm
+if (-not (Get-Command "pnpm" -ErrorAction SilentlyContinue)) {
+    Write-Warn "pnpm não encontrado. A instalar..."
+    npm install -g pnpm
+    if ($LASTEXITCODE -ne 0) {
+        Write-Err "Falhou a instalar pnpm"
+        Read-Host "Prima Enter para sair"
+        exit 1
+    }
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Write-Ok "pnpm instalado"
+} else {
+    Write-Ok "pnpm $(pnpm -v)"
+}
+
+Write-Ok "wrangler será instalado como dependência do projecto"
+
+# ─────────────────────────────────────────────────────────
+# 1. Recolher informações
+# ─────────────────────────────────────────────────────────
+Write-Step "Configuração do novo projecto"
+
+$projectName = Read-Host "  Nome do projecto (ex: meu-saas)"
+while ([string]::IsNullOrWhiteSpace($projectName)) {
+    Write-Warn "O nome não pode ser vazio."
+    $projectName = Read-Host "  Nome do projecto (ex: meu-saas)"
+}
+$projectSlug = $projectName.ToLower().Trim() -replace '[^a-z0-9\-]', '-'
+
+$appDisplayName = Read-Host "  Nome visível da app (ex: Meu SaaS — Enter = $projectName)"
+if ([string]::IsNullOrWhiteSpace($appDisplayName)) { $appDisplayName = $projectName }
+
+$defaultLang = Read-Host "  Idioma default (pt/en/es — Enter = pt)"
+if ([string]::IsNullOrWhiteSpace($defaultLang)) { $defaultLang = "pt" }
+
+$cfSubdomain = Read-Host "  Subdomínio Cloudflare Workers (ex: acemang-jedi — Enter = configurar depois)"
+
+$prodDomain = ""
+if (-not [string]::IsNullOrWhiteSpace($cfSubdomain)) {
+    $prodDomain = Read-Host "  Domínio de produção (ex: app.meudominio.com — Enter = usar workers.dev)"
+}
+
+# Derivar nomes automaticamente
+$apiWorkerName = "${projectSlug}-api"
+$webWorkerName = "${projectSlug}-web"
+$dbName        = $projectSlug
+$dbNameStaging = "${projectSlug}-staging"
+$r2Bucket      = "${projectSlug}-storage"
+$r2BucketStg   = "${projectSlug}-storage-staging"
+
+# Gerar URLs
+$stagingApiUrl = "https://${apiWorkerName}-staging.SUBDOMAIN.workers.dev"
+$stagingWebUrl = "https://${webWorkerName}-staging.SUBDOMAIN.workers.dev"
+$prodApiUrl    = "https://${apiWorkerName}.SUBDOMAIN.workers.dev"
+$prodWebUrl    = "https://${webWorkerName}.SUBDOMAIN.workers.dev"
+
+if (-not [string]::IsNullOrWhiteSpace($cfSubdomain)) {
+    $stagingApiUrl = "https://${apiWorkerName}-staging.${cfSubdomain}.workers.dev"
+    $stagingWebUrl = "https://${webWorkerName}-staging.${cfSubdomain}.workers.dev"
+    if (-not [string]::IsNullOrWhiteSpace($prodDomain)) {
+        $prodWebUrl = "https://$prodDomain"
+        $prodApiUrl = "https://$prodDomain/api"
+    } else {
+        $prodWebUrl = "https://${webWorkerName}.${cfSubdomain}.workers.dev"
+        $prodApiUrl = "https://${apiWorkerName}.${cfSubdomain}.workers.dev"
+    }
+}
+
+Write-Host ""
+Write-Host "  ─── Resumo ───" -ForegroundColor DarkCyan
+Write-Host "  Projecto:       $projectSlug"
+Write-Host "  App Nome:       $appDisplayName"
+Write-Host "  Idioma:         $defaultLang"
+Write-Host "  API Worker:     $apiWorkerName"
+Write-Host "  Web Worker:     $webWorkerName"
+Write-Host "  D1 prod:        $dbName"
+Write-Host "  D1 staging:     $dbNameStaging"
+Write-Host "  R2 prod:        $r2Bucket"
+Write-Host "  R2 staging:     $r2BucketStg"
+Write-Host "  Staging Web:    $stagingWebUrl"
+Write-Host "  Staging API:    $stagingApiUrl"
+Write-Host "  Prod Web:       $prodWebUrl"
+Write-Host "  Prod API:       $prodApiUrl"
+Write-Host ""
+Write-Host "  O super user será definido no browser (/setup)" -ForegroundColor DarkGray
+Write-Host ""
+
+$confirm = Read-Host "  Confirmar? (s/n)"
+if ($confirm -notin @("s", "S", "y", "Y", "sim", "yes")) {
+    Write-Warn "Cancelado."
+    Read-Host "Prima Enter para sair"
+    exit 0
+}
+
+# ─────────────────────────────────────────────────────────
+# 2. Limpar caches
+# ─────────────────────────────────────────────────────────
+Write-Step "A limpar caches antigos..."
+
+@(
+    ".turbo",
+    "apps/web/.svelte-kit",
+    "apps/web/.turbo",
+    "apps/web/.wrangler",
+    "apps/api/.turbo",
+    "apps/api/.wrangler",
+    "node_modules",
+    "apps/api/node_modules",
+    "apps/web/node_modules"
+) | ForEach-Object {
+    if (Test-Path $_) {
+        Remove-Item $_ -Recurse -Force
+        Write-Ok "Removido $_"
+    }
+}
+
+# ─────────────────────────────────────────────────────────
+# 3. Renomear — apps/api/wrangler.toml
+# ─────────────────────────────────────────────────────────
+Write-Step "A actualizar apps/api/wrangler.toml..."
+
+$apiWrangler = "apps/api/wrangler.toml"
+if (Test-Path $apiWrangler) {
+    $c = Get-Content $apiWrangler -Raw
+
+    # Worker name (linha 1)
+    $c = $c -replace '(?m)^name\s*=\s*"arch-api"', "name = `"$apiWorkerName`""
+
+    # D1 database_name — default e production (ambos "arch")
+    $c = $c -replace '(database_name\s*=\s*)"arch"(\s)', "`$1`"$dbName`"`$2"
+    # D1 database_name — staging
+    $c = $c -replace '(database_name\s*=\s*)"arch-staging"', "`$1`"$dbNameStaging`""
+
+    # R2 — default e production
+    $c = $c -replace '(bucket_name\s*=\s*)"arch-storage"(\s)', "`$1`"$r2Bucket`"`$2"
+    # R2 — staging
+    $c = $c -replace '(bucket_name\s*=\s*)"arch-storage-staging"', "`$1`"$r2BucketStg`""
+
+    # URLs staging
+    $c = $c -replace 'APP_URL\s*=\s*"https://arch-web-staging[^"]*"',  "APP_URL = `"$stagingWebUrl`""
+    $c = $c -replace 'API_URL\s*=\s*"https://arch-api-staging[^"]*"',  "API_URL = `"$stagingApiUrl`""
+
+    # URLs production
+    $c = $c -replace 'APP_URL\s*=\s*"https://arch\.[^"]*"',  "APP_URL = `"$prodWebUrl`""
+    $c = $c -replace 'API_URL\s*=\s*"https://arch\.[^"]*"',  "API_URL = `"$prodApiUrl`""
+
+    # Database IDs → REPLACE_ME (utilizador preenche depois de criar no CF)
+    $c = $c -replace 'database_id\s*=\s*"[a-f0-9\-]+"', 'database_id = "REPLACE_ME"'
+
+    Set-Content $apiWrangler $c -NoNewline
+    Write-Ok "apps/api/wrangler.toml actualizado"
+} else {
+    Write-Warn "apps/api/wrangler.toml não encontrado"
+}
+
+# ─────────────────────────────────────────────────────────
+# 4. Renomear — apps/web/wrangler.toml
+# ─────────────────────────────────────────────────────────
+Write-Step "A actualizar apps/web/wrangler.toml..."
+
+$webWrangler = "apps/web/wrangler.toml"
+if (Test-Path $webWrangler) {
+    $c = Get-Content $webWrangler -Raw
+
+    # Worker name (linha 1)
+    $c = $c -replace '(?m)^name\s*=\s*"arch-web"', "name = `"$webWorkerName`""
+
+    # Service binding — default (local)
+    $c = $c -replace '(service\s*=\s*)"arch-api"(\s)', "`$1`"$apiWorkerName`"`$2"
+    # Service binding — staging
+    $c = $c -replace '(service\s*=\s*)"arch-api-staging"', "`$1`"${apiWorkerName}-staging`""
+    # Service binding — production
+    $c = $c -replace '(service\s*=\s*)"arch-api-production"', "`$1`"${apiWorkerName}-production`""
+
+    Set-Content $webWrangler $c -NoNewline
+    Write-Ok "apps/web/wrangler.toml actualizado"
+} else {
+    Write-Warn "apps/web/wrangler.toml não encontrado"
+}
+
+# ─────────────────────────────────────────────────────────
+# 5. Renomear — package.json (raiz)
+#    Nome actual: "cf-base"
+# ─────────────────────────────────────────────────────────
+Write-Step "A actualizar package.json..."
+
+$rootPkg = "package.json"
+if (Test-Path $rootPkg) {
+    $c = Get-Content $rootPkg -Raw
+    $c = $c -replace '"name"\s*:\s*"cf-base"', "`"name`": `"$projectSlug`""
+    Set-Content $rootPkg $c -NoNewline
+    Write-Ok "package.json → $projectSlug"
+}
+
+# apps/api/package.json — nome actual: "api" (não precisa mudar)
+# apps/web/package.json — nome actual: "web" (não precisa mudar)
+Write-Ok "apps/api e apps/web package.json — nomes genéricos, sem alteração necessária"
+
+# ─────────────────────────────────────────────────────────
+# 6. Limpar seed.sql (remover utilizador hardcoded)
+#    O /setup cria o super user no browser
+# ─────────────────────────────────────────────────────────
+Write-Step "A preparar seed.sql..."
+
+$seedFile = "apps/api/seed.sql"
+if (Test-Path $seedFile) {
+    # Limpar o seed — o /setup faz a criação do super user
+    @"
+-- Seed limpo — o super user é criado via /setup no browser
+-- Adiciona aqui dados iniciais se precisares (ex: config defaults)
+"@ | Set-Content $seedFile
+    Write-Ok "seed.sql limpo (super user será criado via /setup)"
+} else {
+    Write-Warn "seed.sql não encontrado"
+}
+
+# ─────────────────────────────────────────────────────────
+# 7. Actualizar app_name e default_language no config
+#    Procurar em todos os ficheiros SQL de migration/seed
+# ─────────────────────────────────────────────────────────
+Write-Step "A procurar referências 'cf-base' nos ficheiros SQL..."
+
+$sqlFiles = Get-ChildItem "apps/api/migrations" -Filter "*.sql" -ErrorAction SilentlyContinue
+if ($sqlFiles) {
+    foreach ($f in $sqlFiles) {
+        $content = Get-Content $f.FullName -Raw
+        $changed = $false
+
+        if ($content -match "cf-base") {
+            $content = $content -replace "cf-base", $appDisplayName
+            $changed = $true
+        }
+
+        if ($changed) {
+            Set-Content $f.FullName $content -NoNewline
+            Write-Ok "$($f.Name) — referências actualizadas"
+        }
+    }
+}
+
+# ─────────────────────────────────────────────────────────
+# 8. Gerar secrets → .dev.vars
+# ─────────────────────────────────────────────────────────
+Write-Step "A gerar secrets..."
+
+function New-HexSecret($bytes = 32) {
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    $buf = New-Object byte[] $bytes
+    $rng.GetBytes($buf)
+    return ($buf | ForEach-Object { $_.ToString("x2") }) -join ''
+}
+
+$apiDevVars = "apps/api/.dev.vars"
+if (-not (Test-Path $apiDevVars)) {
+    $session    = New-HexSecret 32
+    $encryption = New-HexSecret 32
+    $csrf       = New-HexSecret 32
+
+    @"
+SESSION_SECRET=$session
+ENCRYPTION_KEY=$encryption
+CSRF_SECRET=$csrf
+APP_ENV=development
+"@ | Set-Content $apiDevVars
+    Write-Ok ".dev.vars criado com 3 secrets aleatórios (64 chars hex cada)"
+} else {
+    Write-Warn ".dev.vars já existe — mantido sem alterações"
+}
+
+# Actualizar .dev.vars.example
+$exampleFile = "apps/api/.dev.vars.example"
+@"
+# Gerar com: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+SESSION_SECRET=<64-char-hex>
+ENCRYPTION_KEY=<64-char-hex>
+CSRF_SECRET=<64-char-hex>
+APP_ENV=development
+# Opcionais (só para deploy remoto):
+# CF_ACCOUNT_ID=
+# CF_API_TOKEN=
+"@ | Set-Content $exampleFile
+Write-Ok ".dev.vars.example actualizado"
+
+# ─────────────────────────────────────────────────────────
+# 9. Instalar dependências
+# ─────────────────────────────────────────────────────────
+Write-Step "A instalar dependências (pnpm install)..."
+pnpm install
+if ($LASTEXITCODE -ne 0) {
+    Write-Err "pnpm install falhou!"
+    Read-Host "Prima Enter para sair"
+    exit 1
+}
+Write-Ok "Dependências instaladas (inclui wrangler, turbo, svelte, hono, etc.)"
+
+# ─────────────────────────────────────────────────────────
+# 10. Actualizar dependências (opcional)
+# ─────────────────────────────────────────────────────────
+$doUpdate = Read-Host "`n  Actualizar dependências para últimas versões? (s/n — Enter = n)"
+if ($doUpdate -in @("s", "S", "y", "Y")) {
+    Write-Step "A actualizar dependências..."
+    pnpm update --recursive --latest
+    if ($LASTEXITCODE -eq 0) {
+        Write-Ok "Dependências actualizadas"
+    } else {
+        Write-Warn "Algumas actualizações podem ter falhado — verifica acima"
+    }
+} else {
+    Write-Ok "A usar versões do lockfile"
+}
+
+# ─────────────────────────────────────────────────────────
+# 11. Correr migrações D1 local
+# ─────────────────────────────────────────────────────────
+Write-Step "A correr migrações na BD local..."
+
+$migrationsDir = "apps/api/migrations"
+if (Test-Path $migrationsDir) {
+    $migrations = Get-ChildItem $migrationsDir -Filter "*.sql" | Sort-Object Name
+
+    Push-Location "apps/api"
+    foreach ($m in $migrations) {
+        Write-Host "  → $($m.Name)..." -NoNewline
+        $output = npx wrangler d1 execute DB --local --file="migrations/$($m.Name)" 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host " ok" -ForegroundColor Green
+        } else {
+            Write-Host " (pode já existir ou erro — continua)" -ForegroundColor Yellow
+        }
+    }
+    Pop-Location
+    Write-Ok "Migrações locais processadas"
+} else {
+    Write-Warn "Pasta de migrações não encontrada"
+}
+
+# ─────────────────────────────────────────────────────────
+# 12. Build de verificação
+# ─────────────────────────────────────────────────────────
+Write-Step "A fazer build de verificação..."
+pnpm run build
+if ($LASTEXITCODE -ne 0) {
+    Write-Warn "Build teve erros — verifica acima, podes corrigir depois"
+} else {
+    Write-Ok "Build passou!"
+}
+
+# ─────────────────────────────────────────────────────────
+# 13. Resumo final
+# ─────────────────────────────────────────────────────────
+
+$hasReplaceMe = $false
+if (Test-Path $apiWrangler) {
+    $check = Get-Content $apiWrangler -Raw
+    if ($check -match "REPLACE_ME") { $hasReplaceMe = $true }
+}
+
+Write-Host ""
+Write-Host "═══════════════════════════════════════════════" -ForegroundColor Green
+Write-Host "   Setup concluído com sucesso!" -ForegroundColor Green
+Write-Host "═══════════════════════════════════════════════" -ForegroundColor Green
+Write-Host ""
+Write-Host "  ┌─────────────────────────────────────────┐" -ForegroundColor White
+Write-Host "  │         LOCAL DEV (2 terminais)         │" -ForegroundColor White
+Write-Host "  └─────────────────────────────────────────┘" -ForegroundColor White
+Write-Host ""
+Write-Host "    Terminal 1:  cd apps/api && pnpm dev" -ForegroundColor DarkGray
+Write-Host "    Terminal 2:  cd apps/web && pnpm dev" -ForegroundColor DarkGray
+Write-Host "    Abrir:       http://localhost:8788" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "    Na 1ª visita → /setup pede email + password" -ForegroundColor DarkGray
+Write-Host "    do super user. Sem seed, sem SQL manual." -ForegroundColor DarkGray
+Write-Host ""
+
+if ($hasReplaceMe) {
+    Write-Host "  ┌─────────────────────────────────────────┐" -ForegroundColor Yellow
+    Write-Host "  │    ANTES DO DEPLOY (staging/produção)   │" -ForegroundColor Yellow
+    Write-Host "  └─────────────────────────────────────────┘" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  1. Criar recursos no Cloudflare:" -ForegroundColor White
+    Write-Host "     cd apps/api" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "     # Bases de dados D1" -ForegroundColor DarkGray
+    Write-Host "     npx wrangler d1 create $dbName" -ForegroundColor DarkGray
+    Write-Host "     npx wrangler d1 create $dbNameStaging" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "     # Buckets R2" -ForegroundColor DarkGray
+    Write-Host "     npx wrangler r2 bucket create $r2Bucket" -ForegroundColor DarkGray
+    Write-Host "     npx wrangler r2 bucket create $r2BucketStg" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  2. Copiar database_id para apps/api/wrangler.toml" -ForegroundColor White
+    Write-Host "     (substituir REPLACE_ME em 3 sítios — default, staging, production)" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  3. Correr migrações remotas:" -ForegroundColor White
+    Write-Host "     # Staging" -ForegroundColor DarkGray
+    Write-Host "     npx wrangler d1 migrations apply DB --env staging --remote" -ForegroundColor DarkGray
+    Write-Host "     # Production" -ForegroundColor DarkGray
+    Write-Host "     npx wrangler d1 migrations apply DB --env production --remote" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  4. Definir secrets remotos:" -ForegroundColor White
+    Write-Host "     npx wrangler secret put SESSION_SECRET --env staging" -ForegroundColor DarkGray
+    Write-Host "     npx wrangler secret put ENCRYPTION_KEY --env staging" -ForegroundColor DarkGray
+    Write-Host "     npx wrangler secret put CSRF_SECRET --env staging" -ForegroundColor DarkGray
+    Write-Host "     (repetir com --env production)" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  5. Deploy:" -ForegroundColor White
+    Write-Host "     pnpm deploy:staging      # staging" -ForegroundColor DarkGray
+    Write-Host "     pnpm deploy:production   # produção" -ForegroundColor DarkGray
+    Write-Host ""
+}
+
+Write-Host "  ┌─────────────────────────────────────────┐" -ForegroundColor DarkCyan
+Write-Host "  │           Ficheiros alterados           │" -ForegroundColor DarkCyan
+Write-Host "  └─────────────────────────────────────────┘" -ForegroundColor DarkCyan
+Write-Host "    apps/api/wrangler.toml" -ForegroundColor DarkGray
+Write-Host "    apps/web/wrangler.toml" -ForegroundColor DarkGray
+Write-Host "    package.json" -ForegroundColor DarkGray
+Write-Host "    apps/api/.dev.vars (secrets)" -ForegroundColor DarkGray
+Write-Host "    apps/api/.dev.vars.example" -ForegroundColor DarkGray
+Write-Host "    apps/api/seed.sql (limpo)" -ForegroundColor DarkGray
+Write-Host ""
+
+Read-Host "Prima Enter para fechar"
+```
+
+```batch
+@echo off
+REM setup.bat — duplo-clique para iniciar
+cd /d "%~dp0"
+powershell -ExecutionPolicy Bypass -File "setup-new-project.ps1"
+pause
+```
+
+The key corrections from what I saw in the actual files: the package names are `"cf-base"`, `"api"`, and `"web"` (not scoped with `@`), so only the root `package.json` name needs changing. The `seed.sql` only has a hardcoded admin user — since `/setup` handles super user creation in the browser, the script now clears the seed entirely instead of trying to edit emails. The `.dev.vars` needs exactly `SESSION_SECRET`, `ENCRYPTION_KEY`, `CSRF_SECRET`, and `APP_ENV` — the `CF_ACCOUNT_ID` and `CF_API_TOKEN` from the bindings output are only needed for remote operations and are optional. The `database_id` values are set to `REPLACE_ME` since they're unique per Cloudflare account and must be created fresh. And the migration files are scanned for `cf-base` references to replace with the new app name.

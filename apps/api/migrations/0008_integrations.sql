@@ -9,10 +9,10 @@ CREATE TABLE IF NOT EXISTS integrations (
                           'email','sms','llm','cloud_storage',
                           'calendar','payments','invoicing','pdf'
                         )),
-  provider              TEXT NOT NULL,              -- ex: 'resend','twilio','openai','stripe'
-  credentials_encrypted TEXT NOT NULL,              -- AES-256-GCM, base64url
+  provider              TEXT NOT NULL,
+  credentials_encrypted TEXT NOT NULL,
   is_active             INTEGER NOT NULL DEFAULT 0 CHECK (is_active IN (0, 1)),
-  tested_at             TEXT,                       -- última vez que foi testada com sucesso
+  tested_at             TEXT,
   created_at            TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   updated_at            TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );

@@ -10,10 +10,41 @@ binding = "ASSETS"
 [observability]
 enabled = true
 
+# ============================================================
+# DEFAULT — wrangler dev (local)
+# Service binding aponta para arch-api a correr localmente
+# ============================================================
 [vars]
-APP_ENV = "production"
+APP_ENV = "development"
 
 [[services]]
 binding = "API"
-service = "arch-api-production"
+service = "arch-api"
 
+# ============================================================
+# STAGING — wrangler deploy --env staging
+# ============================================================
+[env.staging.vars]
+APP_ENV = "staging"
+
+[env.staging.assets]
+directory = ".svelte-kit/cloudflare"
+binding = "ASSETS"
+
+[[env.staging.services]]
+binding = "API"
+service = "arch-api-staging"
+
+# ============================================================
+# PRODUCTION — wrangler deploy --env production
+# ============================================================
+[env.production.vars]
+APP_ENV = "production"
+
+[env.production.assets]
+directory = ".svelte-kit/cloudflare"
+binding = "ASSETS"
+
+[[env.production.services]]
+binding = "API"
+service = "arch-api-production"
